@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useBreakStore } from '../../stores/breakStore'
-import { saveDraw } from '../../lib/supabase'
+import { deleteDraw, fetchLatestDraw, saveDraw } from '../../lib/supabase'
 import WheelCanvas from './WheelCanvas'
 import ResultOverlay from './ResultOverlay'
 import StreamView from './StreamView'
@@ -24,7 +24,12 @@ function copyToClipboard(results: DrawResult[], spotName?: string) {
 }
 
 export default function WheelControls() {
-  const { givePlayers, paidSpots, drawnPlayers, markDrawn, sessionId, removePaidSpot, addLiveResults } = useBreakStore()
+  const {
+    givePlayers, paidSpots, drawnPlayers,
+    markDrawn, unmarkDrawn,
+    sessionId, removePaidSpot, restorePaidSpot,
+    addLiveResults, removeLiveResultsForSpot,
+  } = useBreakStore()
 
   const availablePlayers = useMemo(
     () => givePlayers.filter((p) => !drawnPlayers.includes(p.name)),
@@ -47,6 +52,10 @@ export default function WheelControls() {
 
   // Copié feedback
   const [copied, setCopied] = useState(false)
+
+  // Undo
+  const [undoing, setUndoing] = useState(false)
+  const [undoMessage, setUndoMessage] = useState<string | null>(null)
 
   // Stream mode
   const [streamMode, setStreamMode] = useState(false)
@@ -85,6 +94,35 @@ export default function WheelControls() {
     await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: results.length, results })
     removePaidSpot(selectedSpot.id)
     setSelectedSpotId('')
+  }
+
+  async function undoLastDraw() {
+    if (!sessionId || undoing || spinning) return
+    setUndoing(true)
+    setUndoMessage(null)
+
+    const latestDraw = await fetchLatestDraw(sessionId)
+    if (!latestDraw) {
+      setUndoMessage('Aucun tirage à annuler')
+      setUndoing(false)
+      return
+    }
+
+    const deleted = await deleteDraw(latestDraw.id)
+    if (!deleted) {
+      setUndoMessage('Annulation impossible')
+      setUndoing(false)
+      return
+    }
+
+    const playerNames = latestDraw.results.map((r) => r.give_player)
+    unmarkDrawn(playerNames)
+    restorePaidSpot(latestDraw.spot_name)
+    removeLiveResultsForSpot(latestDraw.spot_name)
+    setSelectedSpotId('')
+    setUndoMessage(`Dernier tirage annulé : ${latestDraw.spot_name}`)
+    setTimeout(() => setUndoMessage(null), 3000)
+    setUndoing(false)
   }
 
   function handleResult(w: string) {
@@ -278,6 +316,18 @@ export default function WheelControls() {
             style={{ background: canAct ? 'rgba(245,158,11,0.15)' : 'transparent', border: `1px solid ${canAct ? 'var(--neon-yellow)' : 'var(--border)'}`, borderRadius: 14, color: canAct ? 'var(--neon-yellow)' : 'var(--text-muted)', padding: '11px 20px', cursor: canAct ? 'pointer' : 'not-allowed', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' }}>
             ⚡ Tirage rapide — récap direct
           </button>
+
+          <button onClick={undoLastDraw} disabled={!sessionId || undoing || spinning}
+            title={sessionId ? 'Annule le dernier tirage sauvegardé' : 'Sauvegarde une session pour activer l’annulation'}
+            style={{ background: sessionId && !spinning ? 'rgba(239,68,68,0.12)' : 'transparent', border: `1px solid ${sessionId && !spinning ? '#ef4444' : 'var(--border)'}`, borderRadius: 14, color: sessionId && !spinning ? '#ef4444' : 'var(--text-muted)', padding: '11px 20px', cursor: sessionId && !spinning ? 'pointer' : 'not-allowed', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' }}>
+            {undoing ? '⏳ Annulation...' : '↩️ Annuler dernier tirage'}
+          </button>
+
+          {undoMessage && (
+            <div style={{ fontSize: 12, color: undoMessage.includes('annulé') ? 'var(--neon-green)' : 'var(--neon-yellow)', textAlign: 'center' }}>
+              {undoMessage}
+            </div>
+          )}
 
           {/* Keyboard hint */}
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>

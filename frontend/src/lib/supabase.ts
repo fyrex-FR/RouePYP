@@ -46,6 +46,24 @@ export async function deleteDrawsBySession(sessionId: string): Promise<void> {
   await supabase.from('draws').delete().eq('session_id', sessionId)
 }
 
+export async function deleteDraw(id: string): Promise<boolean> {
+  const { error } = await supabase.from('draws').delete().eq('id', id)
+  if (error) { console.error('deleteDraw:', error); return false }
+  return true
+}
+
+export async function fetchLatestDraw(sessionId: string): Promise<Draw | null> {
+  const { data, error } = await supabase
+    .from('draws')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) { console.error('fetchLatestDraw:', error); return null }
+  return data
+}
+
 export async function fetchSessions(): Promise<Session[]> {
   const { data, error } = await supabase
     .from('sessions')

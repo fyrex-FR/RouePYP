@@ -34,13 +34,16 @@ interface BreakStore {
 
   drawnPlayers: string[]
   markDrawn: (playerName: string) => void
+  unmarkDrawn: (playerNames: string[]) => void
   setDrawnPlayers: (players: string[]) => void
   resetDrawn: () => void
 
   liveResults: LiveResult[]
   addLiveResults: (results: LiveResult[]) => void
+  removeLiveResultsForSpot: (spotName: string) => void
   clearLiveResults: () => void
 
+  restorePaidSpot: (name: string) => void
   resetTirage: () => void
 }
 
@@ -82,13 +85,30 @@ export const useBreakStore = create<BreakStore>()(
       drawnPlayers: [],
       markDrawn: (playerName) =>
         set((s) => ({ drawnPlayers: [...s.drawnPlayers, playerName] })),
+      unmarkDrawn: (playerNames) =>
+        set((s) => ({
+          drawnPlayers: s.drawnPlayers.filter((name) => !playerNames.includes(name)),
+        })),
       setDrawnPlayers: (players) => set({ drawnPlayers: players }),
       resetDrawn: () => set({ drawnPlayers: [] }),
 
       liveResults: [],
       addLiveResults: (results) =>
         set((s) => ({ liveResults: [...s.liveResults, ...results] })),
+      removeLiveResultsForSpot: (spotName) =>
+        set((s) => ({ liveResults: s.liveResults.filter((r) => r.spot !== spotName) })),
       clearLiveResults: () => set({ liveResults: [] }),
+
+      restorePaidSpot: (name) =>
+        set((s) => {
+          const spotExists = s.paidSpots.some((spot) => spot.name === name)
+          const allSpotExists = s.allPaidSpots.some((spot) => spot.name === name)
+          const restoredSpot = { id: nanoid(), name }
+          return {
+            paidSpots: spotExists ? s.paidSpots : [...s.paidSpots, restoredSpot],
+            allPaidSpots: allSpotExists ? s.allPaidSpots : [...s.allPaidSpots, restoredSpot],
+          }
+        }),
 
       resetTirage: () =>
         set((s) => ({
