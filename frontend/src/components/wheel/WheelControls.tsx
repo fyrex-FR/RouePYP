@@ -24,7 +24,7 @@ function copyToClipboard(results: DrawResult[], spotName?: string) {
 }
 
 export default function WheelControls() {
-  const { givePlayers, paidSpots, drawnPlayers, markDrawn, sessionId, removePaidSpot, liveResults, addLiveResults } = useBreakStore()
+  const { givePlayers, paidSpots, drawnPlayers, markDrawn, sessionId, removePaidSpot, addLiveResults } = useBreakStore()
 
   const availablePlayers = givePlayers.filter((p) => !drawnPlayers.includes(p.name))
 
@@ -306,34 +306,6 @@ export default function WheelControls() {
           )}
         </div>
 
-        {/* Récap live */}
-        {liveResults.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, minWidth: 260, flex: '1 1 260px', maxWidth: 320 }}>
-            <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-bright)' }}>
-                  📊 Récap live ({liveResults.length})
-                </span>
-                <button
-                  onClick={() => handleCopy(liveResults)}
-                  style={{ background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(168,85,247,0.15)', border: `1px solid ${copied ? 'var(--neon-green)' : 'var(--accent)'}`, borderRadius: 8, color: copied ? 'var(--neon-green)' : 'var(--accent-bright)', padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all 0.2s' }}
-                >
-                  {copied ? '✓ Copié !' : '📋 Copier'}
-                </button>
-              </div>
-              <div style={{ maxHeight: 400, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {liveResults.map((r, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', borderRadius: 8, padding: '7px 10px' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 18 }}>#{i + 1}</span>
-                    <span style={{ flex: 1, fontSize: 12, color: 'var(--neon-green)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🎁 {r.give_player}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>→</span>
-                    <span style={{ fontSize: 12, color: 'var(--neon-cyan)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💰 {r.paid_player}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Animated overlay */}
