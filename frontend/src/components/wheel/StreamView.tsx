@@ -1,5 +1,5 @@
 import WheelCanvas from './WheelCanvas'
-import type { DrawResult, PaidSpot } from '../../types'
+import type { PaidSpot } from '../../types'
 
 interface Props {
   segments: string[]
@@ -9,7 +9,6 @@ interface Props {
   drawCount: number
   maxDraws: number
   spinning: boolean
-  liveResults: (DrawResult & { spot: string })[]
   winner: string | null
   onExit: () => void
   triggerSpin: boolean
@@ -23,7 +22,7 @@ interface Props {
 
 export default function StreamView({
   segments, selectedSpotId, selectedSpot, paidSpots, drawCount, maxDraws, spinning,
-  liveResults, winner, onExit, triggerSpin, onResult, onSpinComplete,
+  winner, onExit, triggerSpin, onResult, onSpinComplete,
   onSpotChange, onDrawCountChange, onStart, onQuickDraw,
 }: Props) {
   const canAct = !spinning && !!selectedSpot && segments.length > 0
@@ -131,24 +130,6 @@ export default function StreamView({
         </div>
       </div>
 
-      {/* Right — Live recap */}
-      {liveResults.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', width: 320, maxHeight: '80vh', background: 'var(--bg-card)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 20, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 700, color: 'var(--accent-bright)' }}>
-            📊 Récap live ({liveResults.length})
-          </div>
-          <div style={{ overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {liveResults.map((r, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', borderRadius: 10, padding: '9px 12px', animation: i === liveResults.length - 1 ? 'slide-up 0.3s ease' : 'none' }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 22 }}>#{i + 1}</span>
-                <span style={{ flex: 1, fontSize: 13, color: 'var(--neon-green)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🎁 {r.give_player}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>→</span>
-                <span style={{ fontSize: 13, color: 'var(--neon-cyan)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💰 {r.paid_player}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

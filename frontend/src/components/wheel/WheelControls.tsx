@@ -172,7 +172,6 @@ export default function WheelControls() {
         drawCount={drawCount}
         maxDraws={maxDraws}
         spinning={spinning}
-        liveResults={liveResults}
         winner={winner}
         onExit={() => setStreamMode(false)}
         triggerSpin={triggerSpin}
