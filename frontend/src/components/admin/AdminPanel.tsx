@@ -11,7 +11,7 @@ export default function AdminPanel() {
     breakName, setBreakName,
     givePlayers, paidSpots, allPaidSpots,
     setSessionId, sessionId,
-    resetDrawn, resetTirage, setGivePlayers, setPaidSpots, setDrawnPlayers,
+    resetDrawn, resetTirage, setGivePlayers, setPaidSpots, loadSessionSpots, setDrawnPlayers,
   } = useBreakStore()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -67,14 +67,12 @@ export default function AdminPanel() {
     )
     const drawnSpotNames = new Set(draws.map((d) => d.spot_name))
 
+    const allSessionSpots = session.paid_spots.map((s) => ({ id: nanoid(), name: s.name }))
+    const remainingSessionSpots = allSessionSpots.filter((s) => !drawnSpotNames.has(s.name))
+
     setBreakName(session.break_name)
     setGivePlayers(session.give_players.map((name) => ({ id: nanoid(), name })))
-    // Retirer les spots déjà tirés
-    setPaidSpots(
-      session.paid_spots
-        .filter((s) => !drawnSpotNames.has(s.name))
-        .map((s) => ({ id: nanoid(), name: s.name }))
-    )
+    loadSessionSpots(allSessionSpots, remainingSessionSpots)
     setSessionId(session.id)
     setDrawnPlayers(drawnNames)
   }

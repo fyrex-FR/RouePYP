@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useBreakStore } from '../../stores/breakStore'
 import { saveDraw } from '../../lib/supabase'
 import WheelCanvas from './WheelCanvas'
@@ -26,7 +26,10 @@ function copyToClipboard(results: DrawResult[], spotName?: string) {
 export default function WheelControls() {
   const { givePlayers, paidSpots, drawnPlayers, markDrawn, sessionId, removePaidSpot, addLiveResults } = useBreakStore()
 
-  const availablePlayers = givePlayers.filter((p) => !drawnPlayers.includes(p.name))
+  const availablePlayers = useMemo(
+    () => givePlayers.filter((p) => !drawnPlayers.includes(p.name)),
+    [givePlayers, drawnPlayers]
+  )
 
   const [selectedSpotId, setSelectedSpotId] = useState<string>('')
   const [drawCount, setDrawCount] = useState(1)
@@ -48,50 +51,27 @@ export default function WheelControls() {
   // Stream mode
   const [streamMode, setStreamMode] = useState(false)
 
-  const selectedSpot = paidSpots.find((s) => s.id === selectedSpotId)
-  const sortedSpots = [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  const sortedSpots = useMemo(
+    () => [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+    [paidSpots]
+  )
+  const effectiveSelectedSpotId = selectedSpotId || sortedSpots[0]?.id || ''
+  const selectedSpot = paidSpots.find((s) => s.id === effectiveSelectedSpotId)
   const maxDraws = Math.min(availablePlayers.length, 20)
+  const effectiveDrawCount = Math.min(drawCount, Math.max(maxDraws, 1))
 
-  useEffect(() => {
-    if (paidSpots.length > 0 && !selectedSpotId) {
-      setSelectedSpotId(paidSpots[0].id)
-    }
-  }, [paidSpots])
-
-  useEffect(() => {
-    setDrawCount(Math.min(drawCount, maxDraws))
-  }, [maxDraws])
-
-  // Raccourcis clavier
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
-    if (e.code === 'Space') {
-      e.preventDefault()
-      if (!spinning && selectedSpot && availablePlayers.length > 0) startSequence()
-    }
-    if (e.code === 'Enter') {
-      e.preventDefault()
-      if (showOverlay) handleNext()
-    }
-  }, [spinning, selectedSpot, availablePlayers, showOverlay, winner])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
-
-  function startSequence() {
+  const startSequence = useCallback(() => {
     if (!selectedSpot || availablePlayers.length === 0 || spinning) return
     setCurrentDrawIndex(0)
     setSessionResults([])
     setRemainingSegments(availablePlayers.map((p) => p.name))
     setTriggerSpin(true)
     setSpinning(true)
-  }
+  }, [selectedSpot, availablePlayers, spinning])
 
   async function quickDraw() {
     if (!selectedSpot || availablePlayers.length === 0 || spinning) return
-    const picked = shuffle(availablePlayers).slice(0, drawCount)
+    const picked = shuffle(availablePlayers).slice(0, effectiveDrawCount)
     const now = new Date().toISOString()
     const results: DrawResult[] = picked.map((p) => ({
       give_player: p.name,
@@ -116,30 +96,7 @@ export default function WheelControls() {
     setTriggerSpin(false)
   }
 
-  function handleNext() {
-    if (!winner || !selectedSpot) return
-    const result: DrawResult = {
-      give_player: winner,
-      paid_player: selectedSpot.name,
-      drawn_at: new Date().toISOString(),
-    }
-    const updatedResults = [...sessionResults, result]
-    setSessionResults(updatedResults)
-    markDrawn(winner)
-    const nextIndex = currentDrawIndex + 1
-    if (nextIndex < drawCount) {
-      const newRemaining = remainingSegments.filter((n) => n !== winner)
-      setRemainingSegments(newRemaining)
-      setCurrentDrawIndex(nextIndex)
-      setShowOverlay(false)
-      setWinner(null)
-      setTimeout(() => setTriggerSpin(true), 400)
-    } else {
-      handleClose(updatedResults)
-    }
-  }
-
-  async function handleClose(results?: DrawResult[]) {
+  const handleClose = useCallback(async (results?: DrawResult[]) => {
     const finalResults = results ?? sessionResults
     setShowOverlay(false)
     setSpinning(false)
@@ -151,7 +108,48 @@ export default function WheelControls() {
       removePaidSpot(selectedSpot.id)
       setSelectedSpotId('')
     }
-  }
+  }, [sessionResults, selectedSpot, addLiveResults, sessionId, removePaidSpot])
+
+  const handleNext = useCallback(() => {
+    if (!winner || !selectedSpot) return
+    const result: DrawResult = {
+      give_player: winner,
+      paid_player: selectedSpot.name,
+      drawn_at: new Date().toISOString(),
+    }
+    const updatedResults = [...sessionResults, result]
+    setSessionResults(updatedResults)
+    markDrawn(winner)
+    const nextIndex = currentDrawIndex + 1
+    if (nextIndex < effectiveDrawCount) {
+      const newRemaining = remainingSegments.filter((n) => n !== winner)
+      setRemainingSegments(newRemaining)
+      setCurrentDrawIndex(nextIndex)
+      setShowOverlay(false)
+      setWinner(null)
+      setTimeout(() => setTriggerSpin(true), 400)
+    } else {
+      handleClose(updatedResults)
+    }
+  }, [winner, selectedSpot, sessionResults, markDrawn, currentDrawIndex, effectiveDrawCount, remainingSegments, handleClose])
+
+  // Raccourcis clavier
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
+    if (e.code === 'Space') {
+      e.preventDefault()
+      if (!spinning && selectedSpot && availablePlayers.length > 0) startSequence()
+    }
+    if (e.code === 'Enter') {
+      e.preventDefault()
+      if (showOverlay) handleNext()
+    }
+  }, [spinning, selectedSpot, availablePlayers.length, showOverlay, startSequence, handleNext])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   function handleCopy(results: DrawResult[], spotName?: string) {
     copyToClipboard(results, spotName)
@@ -167,10 +165,10 @@ export default function WheelControls() {
     return (
       <StreamView
         segments={remainingSegments.length ? remainingSegments : availablePlayers.map((p) => p.name)}
-        selectedSpotId={selectedSpotId}
+        selectedSpotId={effectiveSelectedSpotId}
         selectedSpot={selectedSpot?.name ?? ''}
         paidSpots={paidSpots}
-        drawCount={drawCount}
+        drawCount={effectiveDrawCount}
         maxDraws={maxDraws}
         spinning={spinning}
         winner={winner}
@@ -235,7 +233,7 @@ export default function WheelControls() {
               <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>— aucun —</div>
             ) : (
               <select
-                value={selectedSpotId}
+                value={effectiveSelectedSpotId}
                 onChange={(e) => setSelectedSpotId(e.target.value)}
                 disabled={spinning}
                 style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
@@ -262,11 +260,11 @@ export default function WheelControls() {
               Nombre de tirages
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button onClick={() => setDrawCount((c) => Math.max(1, c - 1))} disabled={drawCount <= 1 || spinning}
-                style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 20, cursor: drawCount <= 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-              <span style={{ fontSize: 32, fontWeight: 900, color: 'var(--accent-bright)', minWidth: 48, textAlign: 'center' }}>{drawCount}</span>
-              <button onClick={() => setDrawCount((c) => Math.min(maxDraws, c + 1))} disabled={drawCount >= maxDraws || spinning}
-                style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 20, cursor: drawCount >= maxDraws ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+              <button onClick={() => setDrawCount((c) => Math.max(1, c - 1))} disabled={effectiveDrawCount <= 1 || spinning}
+                style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 20, cursor: effectiveDrawCount <= 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+              <span style={{ fontSize: 32, fontWeight: 900, color: 'var(--accent-bright)', minWidth: 48, textAlign: 'center' }}>{effectiveDrawCount}</span>
+              <button onClick={() => setDrawCount((c) => Math.min(maxDraws, c + 1))} disabled={effectiveDrawCount >= maxDraws || spinning}
+                style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: 20, cursor: effectiveDrawCount >= maxDraws ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
             </div>
           </div>
 
@@ -310,7 +308,7 @@ export default function WheelControls() {
 
       {/* Animated overlay */}
       {showOverlay && winner && selectedSpot && (
-        <ResultOverlay winner={winner} spotName={selectedSpot.name} drawIndex={currentDrawIndex} totalDraws={drawCount} onNext={handleNext} onClose={() => handleClose()} />
+        <ResultOverlay winner={winner} spotName={selectedSpot.name} drawIndex={currentDrawIndex} totalDraws={effectiveDrawCount} onNext={handleNext} onClose={() => handleClose()} />
       )}
 
       {/* Quick draw recap */}

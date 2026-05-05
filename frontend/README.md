@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# RouePYP
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application web de tirage au sort pour des breaks **Pick Your Player — Give Edition**.
 
-Currently, two official plugins are available:
+Elle permet de configurer une session de break, d'ajouter les joueurs "give", les spots payants, puis d'attribuer les gives via une roue animée ou un tirage rapide. Les sessions et l'historique sont sauvegardés dans Supabase.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- React 19
+- TypeScript
+- Vite
+- Zustand avec persistance localStorage
+- Supabase
+- Canvas pour la roue
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Prérequis
 
-## Expanding the ESLint configuration
+- Node.js 22+
+- Un projet Supabase
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Installation
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Variables d'environnement
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+## Supabase
+
+Exécuter le schéma SQL à la racine du repo :
+
+```bash
+../supabase_schema.sql
+```
+
+Tables utilisées :
+
+- `sessions` : configuration d'un break
+- `draws` : résultats des tirages
+
+> ⚠️ Le schéma actuel ouvre les policies RLS en lecture/écriture publique. C'est pratique pour un usage privé ou prototype, mais à durcir avant une app publique.
+
+## Commandes
+
+```bash
+npm run dev      # serveur local Vite
+npm run build    # typecheck + build production
+npm run lint     # lint ESLint
+npm run preview  # preview du build
+```
+
+## Fonctionnalités
+
+- Configuration d'un break
+- Ajout/suppression des joueurs give
+- Ajout/suppression des spots payants
+- Tirage roue animé
+- Tirage rapide multi-give
+- Mode stream plein écran
+- Historique des tirages
+- Export CSV
+- Reprise d'une session existante
+
+## Notes de sécurité / intégrité
+
+Pour rendre les tirages plus auditables, prochaines améliorations recommandées :
+
+- enregistrer une seed de tirage
+- sauvegarder l'ordre initial des participants
+- exporter une preuve JSON du tirage
+- limiter les droits Supabase via auth ou token d'admin

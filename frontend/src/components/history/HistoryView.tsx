@@ -45,6 +45,8 @@ export default function HistoryView() {
   }, [])
 
   useEffect(() => {
+    // The loading flag intentionally flips as soon as the selected session changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     const sessionId = selectedSessionId === 'all' ? undefined : selectedSessionId
     fetchDraws(sessionId).then((d) => {

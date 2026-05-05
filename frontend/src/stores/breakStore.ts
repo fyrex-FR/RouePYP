@@ -25,6 +25,7 @@ interface BreakStore {
   allPaidSpots: PaidSpot[]
   paidSpots: PaidSpot[]
   setPaidSpots: (spots: PaidSpot[]) => void
+  loadSessionSpots: (allSpots: PaidSpot[], remainingSpots: PaidSpot[]) => void
   addPaidSpot: (name: string) => void
   removePaidSpot: (id: string) => void
 
@@ -62,6 +63,8 @@ export const useBreakStore = create<BreakStore>()(
       allPaidSpots: [],
       paidSpots: [],
       setPaidSpots: (spots) => set({ paidSpots: spots, allPaidSpots: spots }),
+      loadSessionSpots: (allSpots, remainingSpots) =>
+        set({ paidSpots: remainingSpots, allPaidSpots: allSpots }),
       addPaidSpot: (name) =>
         set((s) => {
           const spot = { id: nanoid(), name }
