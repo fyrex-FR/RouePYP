@@ -49,6 +49,7 @@ export default function WheelControls() {
   const [streamMode, setStreamMode] = useState(false)
 
   const selectedSpot = paidSpots.find((s) => s.id === selectedSpotId)
+  const sortedSpots = [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
   const maxDraws = Math.min(availablePlayers.length, 20)
 
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function WheelControls() {
                 disabled={spinning}
                 style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
               >
-                {paidSpots.map((s) => (
+                {sortedSpots.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>

@@ -26,6 +26,7 @@ export default function StreamView({
   onSpotChange, onDrawCountChange, onStart, onQuickDraw,
 }: Props) {
   const canAct = !spinning && !!selectedSpot && segments.length > 0
+  const sortedSpots = [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
 
   return (
     <div
@@ -96,7 +97,7 @@ export default function StreamView({
             disabled={spinning}
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', minWidth: 140 }}
           >
-            {paidSpots.map((s) => (
+            {sortedSpots.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
