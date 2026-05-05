@@ -33,6 +33,7 @@ interface BreakStore {
 
   drawnPlayers: string[]
   markDrawn: (playerName: string) => void
+  setDrawnPlayers: (players: string[]) => void
   resetDrawn: () => void
 
   liveResults: LiveResult[]
@@ -78,6 +79,7 @@ export const useBreakStore = create<BreakStore>()(
       drawnPlayers: [],
       markDrawn: (playerName) =>
         set((s) => ({ drawnPlayers: [...s.drawnPlayers, playerName] })),
+      setDrawnPlayers: (players) => set({ drawnPlayers: players }),
       resetDrawn: () => set({ drawnPlayers: [] }),
 
       liveResults: [],

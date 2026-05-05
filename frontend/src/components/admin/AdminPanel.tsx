@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { useBreakStore } from '../../stores/breakStore'
-import { saveSession, fetchSessions, deleteSession, deleteDrawsBySession } from '../../lib/supabase'
+import { saveSession, fetchSessions, deleteSession, deleteDrawsBySession, fetchDraws } from '../../lib/supabase'
 import type { Session } from '../../types'
 import GivePlayersInput from './GivePlayersInput'
 import PaidSpotsInput from './PaidSpotsInput'
@@ -11,7 +11,7 @@ export default function AdminPanel() {
     breakName, setBreakName,
     givePlayers, paidSpots, allPaidSpots,
     setSessionId, sessionId,
-    resetDrawn, resetTirage, setGivePlayers, setPaidSpots,
+    resetDrawn, resetTirage, setGivePlayers, setPaidSpots, setDrawnPlayers,
   } = useBreakStore()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -48,7 +48,7 @@ export default function AdminPanel() {
     setConfirmReset(false)
   }
 
-  function handleLoadSession(id: string) {
+  async function handleLoadSession(id: string) {
     if (id === '__new__') {
       setBreakName('')
       setGivePlayers([])
@@ -59,11 +59,24 @@ export default function AdminPanel() {
     }
     const session = sessions.find((s) => s.id === id)
     if (!session) return
+
+    // Récupérer les draws existants pour restaurer l'état
+    const draws = await fetchDraws(session.id)
+    const drawnNames = draws.flatMap((d) =>
+      (d.results as { give_player: string }[]).map((r) => r.give_player)
+    )
+    const drawnSpotNames = new Set(draws.map((d) => d.spot_name))
+
     setBreakName(session.break_name)
     setGivePlayers(session.give_players.map((name) => ({ id: nanoid(), name })))
-    setPaidSpots(session.paid_spots.map((s) => ({ id: nanoid(), name: s.name })))
+    // Retirer les spots déjà tirés
+    setPaidSpots(
+      session.paid_spots
+        .filter((s) => !drawnSpotNames.has(s.name))
+        .map((s) => ({ id: nanoid(), name: s.name }))
+    )
     setSessionId(session.id)
-    resetDrawn()
+    setDrawnPlayers(drawnNames)
   }
 
   async function handleSave() {
