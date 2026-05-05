@@ -166,13 +166,22 @@ export default function WheelControls() {
     return (
       <StreamView
         segments={remainingSegments.length ? remainingSegments : availablePlayers.map((p) => p.name)}
+        selectedSpotId={selectedSpotId}
         selectedSpot={selectedSpot?.name ?? ''}
+        paidSpots={paidSpots}
+        drawCount={drawCount}
+        maxDraws={maxDraws}
+        spinning={spinning}
         liveResults={liveResults}
         winner={winner}
         onExit={() => setStreamMode(false)}
         triggerSpin={triggerSpin}
         onResult={handleResult}
         onSpinComplete={handleSpinComplete}
+        onSpotChange={setSelectedSpotId}
+        onDrawCountChange={setDrawCount}
+        onStart={startSequence}
+        onQuickDraw={quickDraw}
       />
     )
   }
