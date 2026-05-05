@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useWheel } from '../../hooks/useWheel'
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 
 export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinComplete }: Props) {
   const { canvasRef, draw, spin, isSpinning } = useWheel()
+  const [showHamster, setShowHamster] = useState(false)
 
   useEffect(() => {
     draw(segments, 0)
@@ -17,7 +18,9 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
 
   useEffect(() => {
     if (!triggerSpin) return
+    setShowHamster(true)
     spin(segments, (winner, idx) => {
+      setShowHamster(false)
       onResult(winner, idx)
       onSpinComplete()
     })
@@ -52,6 +55,24 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
           display: 'block',
         }}
       />
+      {/* Hamster qui court pendant le spin */}
+      {showHamster && (
+        <img
+          src="/hamster.gif"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 200,
+            height: 200,
+            objectFit: 'contain',
+            pointerEvents: 'none',
+            filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.9))',
+          }}
+        />
+      )}
     </div>
   )
 }
