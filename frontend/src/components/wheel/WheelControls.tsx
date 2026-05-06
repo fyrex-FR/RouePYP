@@ -69,6 +69,13 @@ export default function WheelControls() {
   const maxDraws = Math.min(availablePlayers.length, 20)
   const effectiveDrawCount = Math.min(drawCount, Math.max(maxDraws, 1))
 
+  // Prédéfinir le drawCount quand on change de spot
+  useEffect(() => {
+    if (selectedSpot) {
+      setDrawCount(Math.min(selectedSpot.giveCount, maxDraws || 1))
+    }
+  }, [effectiveSelectedSpotId])
+
   const startSequence = useCallback(() => {
     if (!selectedSpot || availablePlayers.length === 0 || spinning) return
     setCurrentDrawIndex(0)

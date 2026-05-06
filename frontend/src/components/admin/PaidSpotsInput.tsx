@@ -6,16 +6,22 @@ export default function PaidSpotsInput() {
   const { paidSpots, setPaidSpots, addPaidSpot, removePaidSpot } = useBreakStore()
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
+  const [singleGiveCount, setSingleGiveCount] = useState(1)
 
   function handleBulkImport() {
-    const names = bulk
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-    if (!names.length) return
+    // Format accepté : "Nom 5" ou "Nom;5" ou juste "Nom" (giveCount=1 par défaut)
+    const lines = bulk.split('\n').map((l) => l.trim()).filter(Boolean)
+    if (!lines.length) return
     const existing = new Set(paidSpots.map((s) => s.name.toLowerCase()))
-    const unique = names.filter((n) => !existing.has(n.toLowerCase()))
-    const spots = unique.map((name) => ({ id: nanoid(), name }))
+    const spots = lines
+      .map((line) => {
+        const match = line.match(/^(.+?)[\s;]+(\d+)$/)
+        const name = match ? match[1].trim() : line
+        const giveCount = match ? parseInt(match[2], 10) : 1
+        return { name, giveCount }
+      })
+      .filter(({ name }) => !existing.has(name.toLowerCase()))
+      .map(({ name, giveCount }) => ({ id: nanoid(), name, giveCount }))
     setPaidSpots([...paidSpots, ...spots])
     setBulk('')
   }
@@ -23,8 +29,13 @@ export default function PaidSpotsInput() {
   function handleAddSingle() {
     const name = singleName.trim()
     if (!name) return
-    addPaidSpot(name)
+    addPaidSpot(name, singleGiveCount)
     setSingleName('')
+    setSingleGiveCount(1)
+  }
+
+  function handleUpdateGiveCount(id: string, giveCount: number) {
+    setPaidSpots(paidSpots.map((s) => s.id === id ? { ...s, giveCount } : s))
   }
 
   return (
@@ -61,12 +72,12 @@ export default function PaidSpotsInput() {
         }}
       >
         <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          Coller une liste (1 joueur par ligne)
+          Coller une liste — format : <code style={{ color: 'var(--neon-cyan)' }}>Nom 5</code> ou <code style={{ color: 'var(--neon-cyan)' }}>Nom;5</code> (nombre de gives)
         </label>
         <textarea
           value={bulk}
           onChange={(e) => setBulk(e.target.value)}
-          placeholder={'LeBron James\nSteph Curry\nKevin Durant'}
+          placeholder={'LeBron James 3\nSteph Curry;5\nKevin Durant'}
           rows={5}
           style={{
             background: 'var(--bg-secondary)',
@@ -105,7 +116,7 @@ export default function PaidSpotsInput() {
           value={singleName}
           onChange={(e) => setSingleName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAddSingle()}
-          placeholder="Ajouter un joueur..."
+          placeholder="Nom du joueur..."
           style={{
             flex: 1,
             background: 'var(--bg-card)',
@@ -117,6 +128,13 @@ export default function PaidSpotsInput() {
             outline: 'none',
           }}
         />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button onClick={() => setSingleGiveCount((c) => Math.max(1, c - 1))} disabled={singleGiveCount <= 1}
+            style={{ width: 28, height: 34, borderRadius: 6, border: '1px solid var(--border-bright)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 16, cursor: singleGiveCount <= 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--neon-cyan)', minWidth: 24, textAlign: 'center' }}>{singleGiveCount}</span>
+          <button onClick={() => setSingleGiveCount((c) => Math.min(20, c + 1))} disabled={singleGiveCount >= 20}
+            style={{ width: 28, height: 34, borderRadius: 6, border: '1px solid var(--border-bright)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 16, cursor: singleGiveCount >= 20 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+        </div>
         <button
           onClick={handleAddSingle}
           style={{
@@ -151,14 +169,21 @@ export default function PaidSpotsInput() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                gap: 8,
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
                 borderRadius: 8,
-                padding: '8px 12px',
+                padding: '6px 12px',
               }}
             >
-              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>💰 {s.name}</span>
+              <span style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)' }}>💰 {s.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button onClick={() => handleUpdateGiveCount(s.id, Math.max(1, s.giveCount - 1))}
+                  style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>−</button>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--neon-cyan)', minWidth: 20, textAlign: 'center' }}>{s.giveCount}</span>
+                <button onClick={() => handleUpdateGiveCount(s.id, Math.min(20, s.giveCount + 1))}
+                  style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>+</button>
+              </div>
               <button
                 onClick={() => removePaidSpot(s.id)}
                 style={{

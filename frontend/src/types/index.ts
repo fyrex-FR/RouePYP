@@ -1,6 +1,7 @@
 export interface PaidSpot {
   id: string
   name: string
+  giveCount: number
 }
 
 export interface GivePlayer {
@@ -28,7 +29,7 @@ export interface Session {
   created_at: string
   break_name: string
   give_players: string[]
-  paid_spots: { name: string }[]
+  paid_spots: { name: string; giveCount: number }[]
 }
 
 export type AppView = 'wheel' | 'admin' | 'history'

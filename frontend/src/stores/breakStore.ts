@@ -26,7 +26,7 @@ interface BreakStore {
   paidSpots: PaidSpot[]
   setPaidSpots: (spots: PaidSpot[]) => void
   loadSessionSpots: (allSpots: PaidSpot[], remainingSpots: PaidSpot[]) => void
-  addPaidSpot: (name: string) => void
+  addPaidSpot: (name: string, giveCount?: number) => void
   removePaidSpot: (id: string) => void
 
   sessionId: string | null
@@ -68,9 +68,9 @@ export const useBreakStore = create<BreakStore>()(
       setPaidSpots: (spots) => set({ paidSpots: spots, allPaidSpots: spots }),
       loadSessionSpots: (allSpots, remainingSpots) =>
         set({ paidSpots: remainingSpots, allPaidSpots: allSpots }),
-      addPaidSpot: (name) =>
+      addPaidSpot: (name, giveCount = 1) =>
         set((s) => {
-          const spot = { id: nanoid(), name }
+          const spot = { id: nanoid(), name, giveCount }
           return {
             paidSpots: [...s.paidSpots, spot],
             allPaidSpots: [...s.allPaidSpots, spot],
@@ -103,7 +103,8 @@ export const useBreakStore = create<BreakStore>()(
         set((s) => {
           const spotExists = s.paidSpots.some((spot) => spot.name === name)
           const allSpotExists = s.allPaidSpots.some((spot) => spot.name === name)
-          const restoredSpot = { id: nanoid(), name }
+          const originalGiveCount = s.allPaidSpots.find((spot) => spot.name === name)?.giveCount ?? 1
+          const restoredSpot = { id: nanoid(), name, giveCount: originalGiveCount }
           return {
             paidSpots: spotExists ? s.paidSpots : [...s.paidSpots, restoredSpot],
             allPaidSpots: allSpotExists ? s.allPaidSpots : [...s.allPaidSpots, restoredSpot],

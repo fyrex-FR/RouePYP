@@ -67,7 +67,7 @@ export default function AdminPanel() {
     )
     const drawnSpotNames = new Set(draws.map((d) => d.spot_name))
 
-    const allSessionSpots = session.paid_spots.map((s) => ({ id: nanoid(), name: s.name }))
+    const allSessionSpots = session.paid_spots.map((s) => ({ id: nanoid(), name: s.name, giveCount: s.giveCount ?? 1 }))
     const remainingSessionSpots = allSessionSpots.filter((s) => !drawnSpotNames.has(s.name))
 
     setBreakName(session.break_name)
@@ -83,7 +83,7 @@ export default function AdminPanel() {
     const session = await saveSession({
       break_name: breakName.trim(),
       give_players: givePlayers.map((p) => p.name),
-      paid_spots: paidSpots.map((s) => ({ name: s.name })),
+      paid_spots: paidSpots.map((s) => ({ name: s.name, giveCount: s.giveCount })),
     })
     if (session) {
       setSessionId(session.id)
