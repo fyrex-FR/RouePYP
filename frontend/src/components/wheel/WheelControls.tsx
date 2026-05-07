@@ -6,6 +6,13 @@ import ResultOverlay from './ResultOverlay'
 import StreamView from './StreamView'
 import type { DrawResult } from '../../types'
 
+function normalizeDrawCount(value: number | null | undefined, maxDraws: number) {
+  const parsed = Number(value)
+  const safeMax = Math.max(maxDraws, 1)
+  if (!Number.isFinite(parsed) || parsed < 1) return 1
+  return Math.min(Math.floor(parsed), safeMax)
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -67,12 +74,12 @@ export default function WheelControls() {
   const effectiveSelectedSpotId = selectedSpotId || sortedSpots[0]?.id || ''
   const selectedSpot = paidSpots.find((s) => s.id === effectiveSelectedSpotId)
   const maxDraws = Math.min(availablePlayers.length, 20)
-  const effectiveDrawCount = Math.min(drawCount, Math.max(maxDraws, 1))
+  const effectiveDrawCount = normalizeDrawCount(drawCount, maxDraws)
 
   // Prédéfinir le drawCount quand on change de spot
   useEffect(() => {
     if (selectedSpot) {
-      setDrawCount(Math.min(selectedSpot.giveCount, maxDraws || 1))
+      setDrawCount(normalizeDrawCount(selectedSpot.giveCount, maxDraws))
     }
   }, [effectiveSelectedSpotId])
 

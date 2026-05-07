@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { nanoid } from 'nanoid'
 import { useBreakStore } from '../../stores/breakStore'
 
+function normalizeGiveCount(value: number | string | null | undefined) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 1) return 1
+  return Math.min(20, Math.floor(parsed))
+}
+
 export default function PaidSpotsInput() {
   const { paidSpots, setPaidSpots, addPaidSpot, removePaidSpot } = useBreakStore()
   const [bulk, setBulk] = useState('')
@@ -17,7 +23,7 @@ export default function PaidSpotsInput() {
       .map((line) => {
         const match = line.match(/^(.+?)[\s;]+(\d+)$/)
         const name = match ? match[1].trim() : line
-        const giveCount = match ? parseInt(match[2], 10) : 1
+        const giveCount = normalizeGiveCount(match ? match[2] : 1)
         return { name, giveCount }
       })
       .filter(({ name }) => !existing.has(name.toLowerCase()))
@@ -29,13 +35,13 @@ export default function PaidSpotsInput() {
   function handleAddSingle() {
     const name = singleName.trim()
     if (!name) return
-    addPaidSpot(name, singleGiveCount)
+    addPaidSpot(name, normalizeGiveCount(singleGiveCount))
     setSingleName('')
     setSingleGiveCount(1)
   }
 
-  function handleUpdateGiveCount(id: string, giveCount: number) {
-    setPaidSpots(paidSpots.map((s) => s.id === id ? { ...s, giveCount } : s))
+  function handleUpdateGiveCount(id: string, giveCount: number | string) {
+    setPaidSpots(paidSpots.map((s) => s.id === id ? { ...s, giveCount: normalizeGiveCount(giveCount) } : s))
   }
 
   return (
@@ -131,7 +137,14 @@ export default function PaidSpotsInput() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button onClick={() => setSingleGiveCount((c) => Math.max(1, c - 1))} disabled={singleGiveCount <= 1}
             style={{ width: 28, height: 34, borderRadius: 6, border: '1px solid var(--border-bright)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 16, cursor: singleGiveCount <= 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--neon-cyan)', minWidth: 24, textAlign: 'center' }}>{singleGiveCount}</span>
+          <input
+            type="number"
+            min={1}
+            max={20}
+            value={singleGiveCount}
+            onChange={(e) => setSingleGiveCount(normalizeGiveCount(e.target.value))}
+            style={{ width: 48, background: 'var(--bg-card)', border: '1px solid var(--border-bright)', borderRadius: 6, padding: '7px 4px', color: 'var(--neon-cyan)', fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none' }}
+          />
           <button onClick={() => setSingleGiveCount((c) => Math.min(20, c + 1))} disabled={singleGiveCount >= 20}
             style={{ width: 28, height: 34, borderRadius: 6, border: '1px solid var(--border-bright)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 16, cursor: singleGiveCount >= 20 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
         </div>
@@ -178,10 +191,17 @@ export default function PaidSpotsInput() {
             >
               <span style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)' }}>💰 {s.name}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <button onClick={() => handleUpdateGiveCount(s.id, Math.max(1, s.giveCount - 1))}
+                <button onClick={() => handleUpdateGiveCount(s.id, normalizeGiveCount(s.giveCount) - 1)}
                   style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>−</button>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--neon-cyan)', minWidth: 20, textAlign: 'center' }}>{s.giveCount}</span>
-                <button onClick={() => handleUpdateGiveCount(s.id, Math.min(20, s.giveCount + 1))}
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={s.giveCount ?? 1}
+                  onChange={(e) => handleUpdateGiveCount(s.id, e.target.value)}
+                  style={{ width: 44, background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 4, padding: '3px 2px', color: 'var(--neon-cyan)', fontSize: 13, fontWeight: 700, textAlign: 'center', outline: 'none' }}
+                />
+                <button onClick={() => handleUpdateGiveCount(s.id, normalizeGiveCount(s.giveCount) + 1)}
                   style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>+</button>
               </div>
               <button
