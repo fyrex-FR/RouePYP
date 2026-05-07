@@ -51,7 +51,13 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
   }, [triggerSpin, segments, spin, onResult, onSpinComplete])
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      className="wheel-canvas-wrap"
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+      }}
+    >
       {/* Outer glow ring */}
       <div
         style={{
@@ -69,7 +75,13 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
         ref={canvasRef}
         width={460}
         height={460}
-        style={{ borderRadius: '50%', display: 'block' }}
+        style={{
+          borderRadius: '50%',
+          display: 'block',
+          width: 'min(460px, calc(100vw - 32px))',
+          height: 'auto',
+          maxWidth: '100%',
+        }}
       />
       {showGif && currentGif && (
         <img
@@ -81,8 +93,8 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 200,
-            height: 200,
+            width: 'clamp(110px, 36vw, 200px)',
+            height: 'clamp(110px, 36vw, 200px)',
             objectFit: 'contain',
             pointerEvents: 'none',
             filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.9))',

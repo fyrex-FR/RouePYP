@@ -30,6 +30,7 @@ export default function StreamView({
 
   return (
     <div
+      className="stream-view"
       style={{
         position: 'fixed',
         inset: 0,
@@ -40,11 +41,13 @@ export default function StreamView({
         justifyContent: 'center',
         gap: 48,
         padding: 40,
+        overflowY: 'auto',
       }}
     >
       {/* Exit button */}
       <button
         onClick={onExit}
+        className="stream-exit"
         style={{
           position: 'absolute',
           top: 16,
@@ -64,7 +67,7 @@ export default function StreamView({
       </button>
 
       {/* Left — Wheel + controls */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+      <div className="stream-main" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 }}>
             Pick Your Player — Give Edition
@@ -89,7 +92,7 @@ export default function StreamView({
         />
 
         {/* Controls bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 520 }}>
+        <div className="stream-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 520 }}>
           {/* Spot selector */}
           <select
             value={selectedSpotId}

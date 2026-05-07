@@ -35,6 +35,10 @@ html, body, #root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+button, select {
+  touch-action: manipulation;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -84,4 +88,94 @@ html, body, #root {
   50% { transform: scale(1.05); }
   70% { transform: scale(0.9); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .wheel-page {
+    gap: 18px !important;
+    padding: 18px 12px 24px !important;
+    min-height: calc(100dvh - 56px) !important;
+  }
+
+  .wheel-header h1 {
+    font-size: clamp(24px, 8vw, 30px) !important;
+    padding-right: 0 !important;
+  }
+
+  .stream-toggle {
+    position: static !important;
+    margin-top: 12px;
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .wheel-layout {
+    gap: 18px !important;
+    align-items: center !important;
+  }
+
+  .wheel-canvas-wrap {
+    width: min(100%, calc(100vw - 24px));
+  }
+
+  .wheel-controls-panel {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .wheel-controls-panel > div,
+  .wheel-controls-panel > button {
+    width: 100%;
+  }
+
+  .stream-view {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 18px !important;
+    padding: 64px 12px 20px !important;
+  }
+
+  .stream-exit {
+    top: 10px !important;
+    right: 10px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .stream-main {
+    width: 100%;
+    gap: 16px !important;
+  }
+
+  .stream-main > div:first-child div:nth-child(2) {
+    font-size: clamp(20px, 7vw, 28px) !important;
+  }
+
+  .stream-controls {
+    width: 100%;
+    gap: 10px !important;
+  }
+
+  .stream-controls select,
+  .stream-controls button {
+    min-height: 42px;
+  }
+
+  .result-card,
+  .quick-recap-card {
+    width: 100% !important;
+    max-width: 420px !important;
+    padding: 28px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .result-actions {
+    flex-direction: column;
+  }
+
+  .result-actions button {
+    width: 100%;
+  }
 }

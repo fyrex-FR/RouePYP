@@ -230,9 +230,9 @@ export default function WheelControls() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '32px 24px', minHeight: 'calc(100vh - 64px)' }}>
+    <div className="wheel-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '32px 24px', minHeight: 'calc(100vh - 64px)' }}>
       {/* Title + stream toggle */}
-      <div style={{ textAlign: 'center', position: 'relative', width: '100%', maxWidth: 900 }}>
+      <div className="wheel-header" style={{ textAlign: 'center', position: 'relative', width: '100%', maxWidth: 900 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, background: 'linear-gradient(135deg, var(--accent-bright), var(--neon-cyan))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 6 }}>
           🎡 Tirage au sort
         </h1>
@@ -240,6 +240,7 @@ export default function WheelControls() {
         <button
           onClick={() => setStreamMode(true)}
           title="Mode stream plein écran"
+          className="stream-toggle"
           style={{ position: 'absolute', right: 0, top: 0, background: 'rgba(168,85,247,0.15)', border: '1px solid var(--accent)', borderRadius: 10, color: 'var(--accent-bright)', padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
         >
           📺 Stream
@@ -258,7 +259,7 @@ export default function WheelControls() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: 1100 }}>
+      <div className="wheel-layout" style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: 1100 }}>
         {/* Wheel */}
         <WheelCanvas
           segments={remainingSegments.length ? remainingSegments : availablePlayers.map((p) => p.name)}
@@ -268,7 +269,7 @@ export default function WheelControls() {
         />
 
         {/* Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 260, flex: '1 1 260px', maxWidth: 320 }}>
+        <div className="wheel-controls-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 260, flex: '1 1 260px', maxWidth: 320 }}>
           {/* Spot selector */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }}>
             <label style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
@@ -370,8 +371,8 @@ export default function WheelControls() {
 
       {/* Quick draw recap */}
       {showQuickRecap && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }} onClick={() => setShowQuickRecap(false)}>
-          <div style={{ background: 'var(--bg-card)', border: '2px solid var(--neon-yellow)', borderRadius: 24, padding: '40px 48px', maxWidth: 460, width: '90%', boxShadow: '0 0 60px rgba(245,158,11,0.3)', animation: 'bounce-in 0.4s cubic-bezier(0.36,0.07,0.19,0.97)' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }} onClick={() => setShowQuickRecap(false)}>
+          <div className="quick-recap-card" style={{ background: 'var(--bg-card)', border: '2px solid var(--neon-yellow)', borderRadius: 24, padding: '40px 48px', maxWidth: 460, width: '90%', boxShadow: '0 0 60px rgba(245,158,11,0.3)', animation: 'bounce-in 0.4s cubic-bezier(0.36,0.07,0.19,0.97)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>⚡</div>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', marginBottom: 4 }}>Tirage rapide</h2>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 24 }}>

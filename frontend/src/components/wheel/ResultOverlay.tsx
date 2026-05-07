@@ -37,6 +37,7 @@ export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws,
       onClick={hasMore ? onNext : onClose}
     >
       <div
+        className="result-card"
         style={{
           background: 'var(--bg-card)',
           border: '2px solid var(--accent)',
@@ -96,7 +97,7 @@ export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws,
           }}
         />
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <div className="result-actions" style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
           {hasMore ? (
             <button
               onClick={onNext}
