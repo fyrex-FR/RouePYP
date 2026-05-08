@@ -1,4 +1,4 @@
-import WheelCanvas from './WheelCanvas'
+import GiveawayDisplay from './GiveawayDisplay'
 import type { PaidSpot } from '../../types'
 
 interface Props {
@@ -84,7 +84,7 @@ export default function StreamView({
           )}
         </div>
 
-        <WheelCanvas
+        <GiveawayDisplay
           segments={segments}
           onResult={onResult}
           triggerSpin={triggerSpin}

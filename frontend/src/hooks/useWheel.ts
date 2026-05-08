@@ -26,7 +26,7 @@ export function useWheel() {
   const spinningRef = useRef(false)
 
   const draw = useCallback(
-    (segments: string[], currentAngle: number) => {
+    (segments: string[], currentAngle: number, showLabels = true) => {
       const canvas = canvasRef.current
       if (!canvas) return
       const ctx = canvas.getContext('2d')
@@ -75,30 +75,32 @@ export function useWheel() {
         ctx.lineWidth = 2
         ctx.stroke()
 
-        // Text
-        ctx.save()
-        ctx.translate(cx, cy)
-        ctx.rotate(startAngle + segAngle / 2)
-        ctx.textAlign = 'right'
-        ctx.textBaseline = 'middle'
+        if (showLabels) {
+          // Text
+          ctx.save()
+          ctx.translate(cx, cy)
+          ctx.rotate(startAngle + segAngle / 2)
+          ctx.textAlign = 'right'
+          ctx.textBaseline = 'middle'
 
-        const maxWidth = radius * 0.72
-        const fontSize = Math.min(14, Math.max(9, 140 / segments.length))
-        ctx.font = `bold ${fontSize}px Inter, sans-serif`
-        ctx.fillStyle = '#ffffff'
-        ctx.shadowColor = colors[0]
-        ctx.shadowBlur = 6
+          const maxWidth = radius * 0.72
+          const fontSize = Math.min(14, Math.max(9, 140 / segments.length))
+          ctx.font = `bold ${fontSize}px Inter, sans-serif`
+          ctx.fillStyle = '#ffffff'
+          ctx.shadowColor = colors[0]
+          ctx.shadowBlur = 6
 
-        let text = label
-        const measured = ctx.measureText(text)
-        if (measured.width > maxWidth) {
-          while (ctx.measureText(text + '…').width > maxWidth && text.length > 3) {
-            text = text.slice(0, -1)
+          let text = label
+          const measured = ctx.measureText(text)
+          if (measured.width > maxWidth) {
+            while (ctx.measureText(text + '…').width > maxWidth && text.length > 3) {
+              text = text.slice(0, -1)
+            }
+            text = text + '…'
           }
-          text = text + '…'
+          ctx.fillText(text, radius - 14, 0)
+          ctx.restore()
         }
-        ctx.fillText(text, radius - 14, 0)
-        ctx.restore()
       })
 
       // Center circle
@@ -138,7 +140,7 @@ export function useWheel() {
   )
 
   const spin = useCallback(
-    (segments: string[], onResult: (winner: string, index: number) => void) => {
+    (segments: string[], onResult: (winner: string, index: number) => void, showLabels = true) => {
       if (spinningRef.current || !segments.length) return
       spinningRef.current = true
 
@@ -164,7 +166,7 @@ export function useWheel() {
         const eased = easeOutCubic(t)
         const currentAngle = startAngle + targetAngle * eased
 
-        draw(segments, currentAngle)
+        draw(segments, currentAngle, showLabels)
 
         if (t < 1) {
           rafRef.current = requestAnimationFrame(frame)
@@ -175,7 +177,7 @@ export function useWheel() {
         }
       }
 
-      draw(segments, 0)
+      draw(segments, 0, showLabels)
       rafRef.current = requestAnimationFrame(frame)
     },
     [draw]

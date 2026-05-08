@@ -6,9 +6,10 @@ interface Props {
   onResult: (winner: string, index: number) => void
   triggerSpin: boolean
   onSpinComplete: () => void
+  showLabels?: boolean
 }
 
-export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinComplete }: Props) {
+export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinComplete, showLabels = true }: Props) {
   const { canvasRef, draw, spin, isSpinning } = useWheel()
   const [showGif, setShowGif] = useState(false)
   const [currentGif, setCurrentGif] = useState<string | null>(null)
@@ -35,8 +36,8 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
   }
 
   useEffect(() => {
-    draw(segments, 0)
-  }, [segments, draw])
+    draw(segments, 0, showLabels)
+  }, [segments, draw, showLabels])
 
   useEffect(() => {
     if (!triggerSpin) return
@@ -47,8 +48,8 @@ export default function WheelCanvas({ segments, onResult, triggerSpin, onSpinCom
       setShowGif(false)
       onResult(winner, idx)
       onSpinComplete()
-    })
-  }, [triggerSpin, segments, spin, onResult, onSpinComplete])
+    }, showLabels)
+  }, [triggerSpin, segments, spin, showLabels, onResult, onSpinComplete])
 
   return (
     <div

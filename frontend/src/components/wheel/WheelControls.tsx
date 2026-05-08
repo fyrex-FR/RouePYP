@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useBreakStore } from '../../stores/breakStore'
 import { deleteDraw, fetchLatestDraw, saveDraw } from '../../lib/supabase'
-import WheelCanvas from './WheelCanvas'
+import GiveawayDisplay from './GiveawayDisplay'
 import ResultOverlay from './ResultOverlay'
 import StreamView from './StreamView'
 import type { DrawResult } from '../../types'
@@ -267,8 +267,8 @@ export default function WheelControls() {
       )}
 
       <div className="wheel-layout" style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: 1100 }}>
-        {/* Wheel */}
-        <WheelCanvas
+        {/* Wheel / Big Giveaway */}
+        <GiveawayDisplay
           segments={remainingSegments.length ? remainingSegments : availablePlayers.map((p) => p.name)}
           onResult={handleResult}
           triggerSpin={triggerSpin}

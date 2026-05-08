@@ -89,6 +89,10 @@ button, select {
   70% { transform: scale(0.9); }
   100% { transform: scale(1); opacity: 1; }
 }
+@keyframes spin-bg {
+  from { transform: rotate(0deg) scale(1.05); }
+  to { transform: rotate(360deg) scale(1.05); }
+}
 
 @media (max-width: 640px) {
   .wheel-page {
