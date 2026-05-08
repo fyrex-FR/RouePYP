@@ -1,20 +1,24 @@
 import BigGiveawayDraw from './BigGiveawayDraw'
 import WheelCanvas from './WheelCanvas'
 
+export type GiveawayDisplayMode = 'auto' | 'wheel' | 'big'
+
 interface Props {
   segments: string[]
   onResult: (winner: string, index: number) => void
   triggerSpin: boolean
   onSpinComplete: () => void
+  mode?: GiveawayDisplayMode
 }
 
 const HIDE_LABELS_AT = 81
 const BIG_GIVEAWAY_AT = 201
 
-export default function GiveawayDisplay({ segments, onResult, triggerSpin, onSpinComplete }: Props) {
+export default function GiveawayDisplay({ segments, onResult, triggerSpin, onSpinComplete, mode = 'auto' }: Props) {
   const count = segments.length
+  const useBigMode = mode === 'big' || (mode === 'auto' && count >= BIG_GIVEAWAY_AT)
 
-  if (count >= BIG_GIVEAWAY_AT) {
+  if (useBigMode) {
     return (
       <BigGiveawayDraw
         segments={segments}
@@ -44,7 +48,7 @@ export default function GiveawayDisplay({ segments, onResult, triggerSpin, onSpi
             lineHeight: 1.4,
           }}
         >
-          {count.toLocaleString('fr-FR')} participants — noms masqués pour garder une roue lisible. Le gagnant s’affiche au reveal.
+          {count.toLocaleString('fr-FR')} joueurs en give — noms masqués pour garder une roue lisible. Le gagnant s’affiche au reveal.
         </div>
       )}
     </div>

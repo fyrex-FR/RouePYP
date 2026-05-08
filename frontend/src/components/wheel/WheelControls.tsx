@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useBreakStore } from '../../stores/breakStore'
 import { deleteDraw, fetchLatestDraw, saveDraw } from '../../lib/supabase'
 import GiveawayDisplay from './GiveawayDisplay'
+import type { GiveawayDisplayMode } from './GiveawayDisplay'
 import ResultOverlay from './ResultOverlay'
 import StreamView from './StreamView'
 import type { DrawResult } from '../../types'
@@ -66,6 +67,7 @@ export default function WheelControls() {
 
   // Stream mode
   const [streamMode, setStreamMode] = useState(false)
+  const [displayMode, setDisplayMode] = useState<GiveawayDisplayMode>('auto')
 
   const sortedSpots = useMemo(
     () => [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr')),
@@ -232,6 +234,8 @@ export default function WheelControls() {
         onDrawCountChange={setDrawCount}
         onStart={startSequence}
         onQuickDraw={quickDraw}
+        displayMode={displayMode}
+        onDisplayModeChange={setDisplayMode}
       />
     )
   }
@@ -273,6 +277,7 @@ export default function WheelControls() {
           onResult={handleResult}
           triggerSpin={triggerSpin}
           onSpinComplete={handleSpinComplete}
+          mode={displayMode}
         />
 
         {/* Controls */}
@@ -305,6 +310,26 @@ export default function WheelControls() {
                 </span>
               </div>
             )}
+          </div>
+
+          {/* Display mode */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }}>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 8 }}>
+              Affichage
+            </label>
+            <select
+              value={displayMode}
+              onChange={(e) => setDisplayMode(e.target.value as GiveawayDisplayMode)}
+              disabled={spinning}
+              style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="auto">Auto recommandé</option>
+              <option value="wheel">Forcer roue</option>
+              <option value="big">Forcer Big Give</option>
+            </select>
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Auto bascule en Big Give à partir de 201 joueurs.
+            </div>
           </div>
 
           {/* Draw count */}

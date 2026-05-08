@@ -1,4 +1,5 @@
 import GiveawayDisplay from './GiveawayDisplay'
+import type { GiveawayDisplayMode } from './GiveawayDisplay'
 import type { PaidSpot } from '../../types'
 
 interface Props {
@@ -18,12 +19,15 @@ interface Props {
   onDrawCountChange: (n: number) => void
   onStart: () => void
   onQuickDraw: () => void
+  displayMode: GiveawayDisplayMode
+  onDisplayModeChange: (mode: GiveawayDisplayMode) => void
 }
 
 export default function StreamView({
   segments, selectedSpotId, selectedSpot, paidSpots, drawCount, maxDraws, spinning,
   winner, onExit, triggerSpin, onResult, onSpinComplete,
   onSpotChange, onDrawCountChange, onStart, onQuickDraw,
+  displayMode, onDisplayModeChange,
 }: Props) {
   const canAct = !spinning && !!selectedSpot && segments.length > 0
   const sortedSpots = [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
@@ -89,6 +93,7 @@ export default function StreamView({
           onResult={onResult}
           triggerSpin={triggerSpin}
           onSpinComplete={onSpinComplete}
+          mode={displayMode}
         />
 
         {/* Controls bar */}
@@ -113,6 +118,19 @@ export default function StreamView({
             <button onClick={() => onDrawCountChange(Math.min(maxDraws, drawCount + 1))} disabled={drawCount >= maxDraws || spinning}
               style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-bright)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 18, cursor: drawCount >= maxDraws ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
           </div>
+
+          {/* Display mode */}
+          <select
+            value={displayMode}
+            onChange={(e) => onDisplayModeChange(e.target.value as GiveawayDisplayMode)}
+            disabled={spinning}
+            title="Choix de l’affichage"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer', minWidth: 130 }}
+          >
+            <option value="auto">Auto</option>
+            <option value="wheel">Roue</option>
+            <option value="big">Big Give</option>
+          </select>
 
           {/* Launch */}
           <button onClick={onStart} disabled={!canAct}
