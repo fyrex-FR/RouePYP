@@ -27,10 +27,10 @@ export default function BigGiveawayDraw({ segments, onResult, triggerSpin, onSpi
       setRollingName('Aucun joueur')
       return
     }
-    if (!rollingName || !segments.includes(rollingName)) {
-      setRollingName(segments[Math.floor(Math.random() * segments.length)])
+    if (!isRolling) {
+      setRollingName('')
     }
-  }, [segments, rollingName])
+  }, [segments, isRolling])
 
   useEffect(() => {
     if (!triggerSpin || !segments.length || rollingRef.current) return
@@ -108,10 +108,10 @@ export default function BigGiveawayDraw({ segments, onResult, triggerSpin, onSpi
           Big Giveaway Mode
         </div>
         <div style={{ fontSize: 44, fontWeight: 950, color: 'var(--accent-bright)', textShadow: '0 0 28px var(--accent-glow)', marginTop: 6 }}>
-          🎁 {segments.length.toLocaleString('fr-FR')} participants
+          🎁 {segments.length.toLocaleString('fr-FR')} joueurs en give
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>
-          Trop de noms pour une roue lisible — la géométrie a été mise au coin.
+          Trop de joueurs pour une roue lisible — la géométrie a été mise au coin.
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function BigGiveawayDraw({ segments, onResult, triggerSpin, onSpi
         }}
       >
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10, fontWeight: 800 }}>
-          {isRolling ? 'Scan en cours…' : 'Prêt à tirer'}
+          {isRolling ? 'Tirage en cours…' : 'En attente du lancement'}
         </div>
         <div
           style={{
@@ -146,7 +146,7 @@ export default function BigGiveawayDraw({ segments, onResult, triggerSpin, onSpi
             transition: 'color 0.15s ease',
           }}
         >
-          {rollingName || '—'}
+          {isRolling ? rollingName : 'Appuie sur LANCER'}
         </div>
         <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginTop: 18 }}>
           <div
