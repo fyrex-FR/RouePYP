@@ -9,7 +9,7 @@ function normalizeGiveCount(value: number | string | null | undefined) {
 }
 
 export default function PaidSpotsInput() {
-  const { paidSpots, setPaidSpots, addPaidSpot, removePaidSpot } = useBreakStore()
+  const { paidSpots, allPaidSpots, setPaidSpots, addPaidSpot, loadSessionSpots } = useBreakStore()
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
   const [singleGiveCount, setSingleGiveCount] = useState(1)
@@ -18,7 +18,7 @@ export default function PaidSpotsInput() {
     // Format accepté : "Nom 5" ou "Nom;5" ou juste "Nom" (giveCount=1 par défaut)
     const lines = bulk.split('\n').map((l) => l.trim()).filter(Boolean)
     if (!lines.length) return
-    const existing = new Set(paidSpots.map((s) => s.name.toLowerCase()))
+    const existing = new Set((allPaidSpots.length ? allPaidSpots : paidSpots).map((s) => s.name.toLowerCase()))
     const spots = lines
       .map((line) => {
         const match = line.match(/^(.+?)[\s;]+(\d+)$/)
@@ -28,7 +28,7 @@ export default function PaidSpotsInput() {
       })
       .filter(({ name }) => !existing.has(name.toLowerCase()))
       .map(({ name, giveCount }) => ({ id: nanoid(), name, giveCount }))
-    setPaidSpots([...paidSpots, ...spots])
+    loadSessionSpots([...(allPaidSpots.length ? allPaidSpots : paidSpots), ...spots], [...paidSpots, ...spots])
     setBulk('')
   }
 
@@ -41,7 +41,10 @@ export default function PaidSpotsInput() {
   }
 
   function handleUpdateGiveCount(id: string, giveCount: number | string) {
-    setPaidSpots(paidSpots.map((s) => s.id === id ? { ...s, giveCount: normalizeGiveCount(giveCount) } : s))
+    loadSessionSpots(
+      (allPaidSpots.length ? allPaidSpots : paidSpots).map((s) => s.id === id ? { ...s, giveCount: normalizeGiveCount(giveCount) } : s),
+      paidSpots.map((s) => s.id === id ? { ...s, giveCount: normalizeGiveCount(giveCount) } : s)
+    )
   }
 
   return (
@@ -205,7 +208,10 @@ export default function PaidSpotsInput() {
                   style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid var(--border-bright)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>+</button>
               </div>
               <button
-                onClick={() => removePaidSpot(s.id)}
+                onClick={() => loadSessionSpots(
+                  (allPaidSpots.length ? allPaidSpots : paidSpots).filter((spot) => spot.id !== s.id),
+                  paidSpots.filter((spot) => spot.id !== s.id)
+                )}
                 style={{
                   background: 'transparent',
                   border: 'none',

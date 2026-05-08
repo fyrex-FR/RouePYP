@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { useBreakStore } from '../../stores/breakStore'
-import { saveSession, fetchSessions, deleteSession, deleteDrawsBySession, fetchDraws } from '../../lib/supabase'
+import { saveSession, updateSession, fetchSessions, deleteSession, deleteDrawsBySession, fetchDraws } from '../../lib/supabase'
 import type { Session } from '../../types'
 import GivePlayersInput from './GivePlayersInput'
 import PaidSpotsInput from './PaidSpotsInput'
@@ -80,14 +80,21 @@ export default function AdminPanel() {
   async function handleSave() {
     if (!breakName.trim() || !givePlayers.length || !paidSpots.length) return
     setSaving(true)
-    const session = await saveSession({
+
+    const payload = {
       break_name: breakName.trim(),
       give_players: givePlayers.map((p) => p.name),
-      paid_spots: paidSpots.map((s) => ({ name: s.name, giveCount: s.giveCount })),
-    })
+      // Persist all known spots, not only remaining ones, so a live edit does not
+      // erase already-drawn spots from the saved session definition.
+      paid_spots: (allPaidSpots.length ? allPaidSpots : paidSpots).map((s) => ({ name: s.name, giveCount: s.giveCount })),
+    }
+
+    const session = sessionId
+      ? await updateSession(sessionId, payload)
+      : await saveSession(payload)
+
     if (session) {
       setSessionId(session.id)
-      resetDrawn()
       setSaved(true)
       fetchSessions().then(setSessions)
       setTimeout(() => setSaved(false), 3000)
@@ -249,12 +256,12 @@ export default function AdminPanel() {
             boxShadow: canSave && !saving ? '0 4px 20px var(--accent-glow)' : 'none',
           }}
         >
-          {saving ? '⏳ Sauvegarde...' : '💾 Sauvegarder la session'}
+          {saving ? '⏳ Sauvegarde...' : sessionId ? '💾 Mettre à jour la session' : '💾 Sauvegarder la session'}
         </button>
 
         {saved && (
           <span style={{ color: 'var(--neon-green)', fontSize: 14, fontWeight: 600, animation: 'slide-up 0.3s ease' }}>
-            ✓ Session sauvegardée !
+            ✓ Session {sessionId ? 'mise à jour' : 'sauvegardée'} !
           </span>
         )}
 
