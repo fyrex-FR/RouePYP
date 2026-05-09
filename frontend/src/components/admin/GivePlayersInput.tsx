@@ -6,7 +6,12 @@ export default function GivePlayersInput() {
   const { givePlayers, setGivePlayers, addGivePlayer, removeGivePlayer, paidSpots, reservedGives, reserveGive, unreserveGive } = useBreakStore()
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
+  const [search, setSearch] = useState('')
   const spots = paidSpots
+  const normalizedSearch = search.trim().toLowerCase()
+  const visibleGivePlayers = [...givePlayers]
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }))
+    .filter((p) => !normalizedSearch || p.name.toLowerCase().includes(normalizedSearch))
 
   function reservedFor(playerId: string) {
     return reservedGives.find((r) => r.givePlayerId === playerId)
@@ -154,16 +159,36 @@ export default function GivePlayersInput() {
 
       {/* Player list */}
       {givePlayers.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            maxHeight: 300,
-            overflowY: 'auto',
-          }}
-        >
-          {givePlayers.map((p) => {
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un joueur en give..."
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-bright)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: 'var(--text-primary)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {visibleGivePlayers.length} affiché{visibleGivePlayers.length > 1 ? 's' : ''} / {givePlayers.length} — tri alphabétique
+            </div>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              maxHeight: 360,
+              overflowY: 'auto',
+            }}
+          >
+          {visibleGivePlayers.map((p) => {
             const reservation = reservedFor(p.id)
             return (
             <div
@@ -228,7 +253,13 @@ export default function GivePlayersInput() {
               </div>
             </div>
           )})}
+          {visibleGivePlayers.length === 0 && (
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px', color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>
+              Aucun joueur trouvé.
+            </div>
+          )}
         </div>
+        </>
       )}
 
       {givePlayers.length > 0 && (
