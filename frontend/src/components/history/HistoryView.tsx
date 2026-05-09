@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { fetchDraws, fetchSessions } from '../../lib/supabase'
 import type { Draw, Session } from '../../types'
 
+interface Props {
+  publicSessionId?: string | null
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('fr-FR', {
     day: '2-digit',
@@ -34,16 +38,22 @@ function exportCSV(draws: Draw[]) {
   URL.revokeObjectURL(url)
 }
 
-export default function HistoryView() {
+export default function HistoryView({ publicSessionId = null }: Props) {
   const [sessions, setSessions] = useState<Session[]>([])
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('all')
+  const [selectedSessionId, setSelectedSessionId] = useState<string>(publicSessionId ?? 'all')
   const [draws, setDraws] = useState<Draw[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const isPublicView = !!publicSessionId
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId)
 
   useEffect(() => {
     fetchSessions().then(setSessions)
   }, [])
+
+  useEffect(() => {
+    if (publicSessionId) setSelectedSessionId(publicSessionId)
+  }, [publicSessionId])
 
   useEffect(() => {
     // The loading flag intentionally flips as soon as the selected session changes.
@@ -71,10 +81,12 @@ export default function HistoryView() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-              📋 Historique des tirages
+              {isPublicView ? '🎁 Résultats du break' : '📋 Historique des tirages'}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-              Tous les tirages enregistrés, du plus récent au plus ancien.
+              {isPublicView && selectedSession
+                ? selectedSession.break_name
+                : 'Tous les tirages enregistrés, du plus récent au plus ancien.'}
             </p>
           </div>
           {draws.length > 0 && (
@@ -101,7 +113,7 @@ export default function HistoryView() {
         </div>
 
         {/* Session selector */}
-        {sessions.length > 0 && (
+        {!isPublicView && sessions.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <label style={{ fontSize: 13, color: 'var(--text-secondary)', flexShrink: 0 }}>
               Break :

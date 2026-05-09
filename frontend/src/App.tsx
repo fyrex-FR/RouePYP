@@ -6,14 +6,22 @@ import HistoryView from './components/history/HistoryView'
 
 export default function App() {
   const view = useBreakStore((s) => s.view)
+  const params = new URLSearchParams(window.location.search)
+  const publicHistorySessionId = params.get('history')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <NavBar />
+      {!publicHistorySessionId && <NavBar />}
       <main style={{ flex: 1, overflowY: 'auto' }}>
-        {view === 'wheel' && <WheelControls />}
-        {view === 'admin' && <AdminPanel />}
-        {view === 'history' && <HistoryView />}
+        {publicHistorySessionId ? (
+          <HistoryView publicSessionId={publicHistorySessionId} />
+        ) : (
+          <>
+            {view === 'wheel' && <WheelControls />}
+            {view === 'admin' && <AdminPanel />}
+            {view === 'history' && <HistoryView />}
+          </>
+        )}
       </main>
     </div>
   )

@@ -20,6 +20,7 @@ export default function AdminPanel() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmResetDraw, setConfirmResetDraw] = useState(false)
   const [sessions, setSessions] = useState<Session[]>([])
+  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false)
 
   useEffect(() => {
     fetchSessions().then(setSessions)
@@ -145,6 +146,14 @@ export default function AdminPanel() {
       setTimeout(() => setSaved(false), 3000)
     }
     setSaving(false)
+  }
+
+  function copyPublicHistoryUrl() {
+    if (!sessionId) return
+    const url = `${window.location.origin}${window.location.pathname}?history=${sessionId}`
+    navigator.clipboard.writeText(url)
+    setCopiedPublicUrl(true)
+    setTimeout(() => setCopiedPublicUrl(false), 2000)
   }
 
   const canSave = breakName.trim() && givePlayers.length > 0 && paidSpots.length > 0
@@ -333,6 +342,25 @@ export default function AdminPanel() {
             }}
           >
             📑 Copier le break
+          </button>
+        )}
+
+        {sessionId && (
+          <button
+            onClick={copyPublicHistoryUrl}
+            title="Copier le lien public des résultats de ce break"
+            style={{
+              background: copiedPublicUrl ? 'rgba(16,185,129,0.18)' : 'rgba(168,85,247,0.12)',
+              border: `1px solid ${copiedPublicUrl ? 'var(--neon-green)' : 'var(--accent)'}`,
+              borderRadius: 12,
+              color: copiedPublicUrl ? 'var(--neon-green)' : 'var(--accent-bright)',
+              padding: '14px 20px',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            {copiedPublicUrl ? '✓ Lien copié' : '🔗 Lien résultats'}
           </button>
         )}
 
