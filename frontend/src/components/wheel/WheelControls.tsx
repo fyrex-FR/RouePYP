@@ -54,6 +54,7 @@ export default function WheelControls() {
   const [triggerSpin, setTriggerSpin] = useState(false)
   const [currentDrawIndex, setCurrentDrawIndex] = useState(0)
   const [sessionResults, setSessionResults] = useState<DrawResult[]>([])
+  const [savedPartialResults, setSavedPartialResults] = useState<DrawResult[]>([])
   const [winner, setWinner] = useState<string | null>(null)
   const [showOverlay, setShowOverlay] = useState(false)
   const [remainingSegments, setRemainingSegments] = useState<string[]>([])
@@ -110,6 +111,7 @@ export default function WheelControls() {
     if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
     setCurrentDrawIndex(0)
     setSessionResults([])
+    setSavedPartialResults([])
     setRemainingSegments(availablePlayers.map((p) => p.name))
     setTriggerSpin(true)
     setSpinning(true)
@@ -177,6 +179,7 @@ export default function WheelControls() {
 
   const handleClose = useCallback(async (results?: DrawResult[]) => {
     const finalResults = results ?? sessionResults
+    const unsavedResults = finalResults.filter((r) => !savedPartialResults.some((s) => s.give_player === r.give_player && s.paid_player === r.paid_player && s.drawn_at === r.drawn_at))
     setDrawWarning(null)
     setShowOverlay(false)
     setSpinning(false)
@@ -184,16 +187,18 @@ export default function WheelControls() {
     setRemainingSegments([])
     if (selectedSpot && finalResults.length > 0) {
       addLiveResults(finalResults.map((r) => ({ ...r, spot: selectedSpot.name })))
-      const saved = await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: finalResults.length, results: finalResults })
+      const saved = unsavedResults.length > 0
+        ? await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: unsavedResults.length, results: unsavedResults })
+        : true
       if (!saved && sessionId) {
         setDrawWarning('⚠️ Tirage gardé en local, mais sauvegarde cloud échouée. Ne recharge pas la page avant d’avoir copié le résultat.')
       }
       removePaidSpot(selectedSpot.id)
       setSelectedSpotId('')
     }
-  }, [sessionResults, selectedSpot, addLiveResults, sessionId, removePaidSpot])
+  }, [sessionResults, savedPartialResults, selectedSpot, addLiveResults, sessionId, removePaidSpot])
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (!winner || !selectedSpot) return
     const result: DrawResult = {
       give_player: winner,
@@ -203,6 +208,12 @@ export default function WheelControls() {
     const updatedResults = [...sessionResults, result]
     setSessionResults(updatedResults)
     markDrawn(winner)
+    const saved = await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: 1, results: [result] })
+    if (saved || !sessionId) {
+      setSavedPartialResults((prev) => [...prev, result])
+    } else {
+      setDrawWarning('⚠️ Ce give est validé localement, mais sauvegarde cloud échouée. Ne recharge pas la page avant d’avoir copié le résultat.')
+    }
     const nextIndex = currentDrawIndex + 1
     if (nextIndex < effectiveDrawCount) {
       const newRemaining = remainingSegments.filter((n) => n !== winner)
@@ -214,7 +225,7 @@ export default function WheelControls() {
     } else {
       handleClose(updatedResults)
     }
-  }, [winner, selectedSpot, sessionResults, markDrawn, currentDrawIndex, effectiveDrawCount, remainingSegments, handleClose])
+  }, [winner, selectedSpot, sessionResults, markDrawn, sessionId, currentDrawIndex, effectiveDrawCount, remainingSegments, handleClose])
 
   // Raccourcis clavier
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

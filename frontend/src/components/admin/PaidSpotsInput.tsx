@@ -13,6 +13,7 @@ export default function PaidSpotsInput() {
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
   const [singleGiveCount, setSingleGiveCount] = useState(1)
+  const [confirmClear, setConfirmClear] = useState(false)
 
   function handleBulkImport() {
     // Format accepté : "Nom 5" ou "Nom;5" ou juste "Nom" (giveCount=1 par défaut)
@@ -231,18 +232,24 @@ export default function PaidSpotsInput() {
 
       {paidSpots.length > 0 && (
         <button
-          onClick={() => setPaidSpots([])}
+          onClick={() => {
+            if (!confirmClear) { setConfirmClear(true); return }
+            setPaidSpots([])
+            setConfirmClear(false)
+          }}
+          onBlur={() => setConfirmClear(false)}
           style={{
-            background: 'transparent',
-            border: '1px solid var(--border)',
+            background: confirmClear ? 'rgba(239,68,68,0.12)' : 'transparent',
+            border: `1px solid ${confirmClear ? '#ef4444' : 'var(--border)'}`,
             borderRadius: 8,
-            color: 'var(--text-muted)',
+            color: confirmClear ? '#ef4444' : 'var(--text-muted)',
             padding: '6px 12px',
             cursor: 'pointer',
             fontSize: 12,
+            fontWeight: confirmClear ? 700 : 400,
           }}
         >
-          Tout effacer
+          {confirmClear ? '⚠️ Confirmer suppression' : 'Tout effacer'}
         </button>
       )}
     </div>

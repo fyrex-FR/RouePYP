@@ -18,6 +18,7 @@ export default function AdminPanel() {
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmResetDraw, setConfirmResetDraw] = useState(false)
   const [sessions, setSessions] = useState<Session[]>([])
 
   useEffect(() => {
@@ -293,24 +294,27 @@ export default function AdminPanel() {
 
         <button
           onClick={async () => {
+            if (!confirmResetDraw) { setConfirmResetDraw(true); return }
             if (sessionId) await deleteDrawsBySession(sessionId)
             resetTirage()
+            setConfirmResetDraw(false)
           }}
+          onBlur={() => setConfirmResetDraw(false)}
           disabled={paidSpots.length === allPaidSpots.length}
           title="Remet tous les spots et efface les tirages en cours"
           style={{
             background: 'transparent',
             border: '1px solid var(--neon-cyan)',
             borderRadius: 12,
-            color: paidSpots.length === allPaidSpots.length ? 'var(--text-muted)' : 'var(--neon-cyan)',
-            borderColor: paidSpots.length === allPaidSpots.length ? 'var(--border-bright)' : 'var(--neon-cyan)',
+            color: confirmResetDraw ? '#ef4444' : paidSpots.length === allPaidSpots.length ? 'var(--text-muted)' : 'var(--neon-cyan)',
+            borderColor: confirmResetDraw ? '#ef4444' : paidSpots.length === allPaidSpots.length ? 'var(--border-bright)' : 'var(--neon-cyan)',
             padding: '14px 20px',
             cursor: paidSpots.length === allPaidSpots.length ? 'not-allowed' : 'pointer',
             fontSize: 14,
             transition: 'all 0.2s',
           }}
         >
-          🔄 Reset tirage
+          {confirmResetDraw ? '⚠️ Confirmer reset tirage' : '🔄 Reset tirage'}
         </button>
 
         <button

@@ -7,6 +7,7 @@ export default function GivePlayersInput() {
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
   const [search, setSearch] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
   const spots = paidSpots
   const normalizedSearch = search.trim().toLowerCase()
   const visibleGivePlayers = [...givePlayers]
@@ -264,18 +265,24 @@ export default function GivePlayersInput() {
 
       {givePlayers.length > 0 && (
         <button
-          onClick={() => setGivePlayers([])}
+          onClick={() => {
+            if (!confirmClear) { setConfirmClear(true); return }
+            setGivePlayers([])
+            setConfirmClear(false)
+          }}
+          onBlur={() => setConfirmClear(false)}
           style={{
-            background: 'transparent',
-            border: '1px solid var(--border)',
+            background: confirmClear ? 'rgba(239,68,68,0.12)' : 'transparent',
+            border: `1px solid ${confirmClear ? '#ef4444' : 'var(--border)'}`,
             borderRadius: 8,
-            color: 'var(--text-muted)',
+            color: confirmClear ? '#ef4444' : 'var(--text-muted)',
             padding: '6px 12px',
             cursor: 'pointer',
             fontSize: 12,
+            fontWeight: confirmClear ? 700 : 400,
           }}
         >
-          Tout effacer
+          {confirmClear ? '⚠️ Confirmer suppression' : 'Tout effacer'}
         </button>
       )}
     </div>
