@@ -8,7 +8,9 @@ const tabs: { id: AppView; label: string; icon: string }[] = [
 ]
 
 export default function NavBar() {
-  const { view, setView, givePlayers, paidSpots } = useBreakStore()
+  const { view, setView, givePlayers, paidSpots, drawnPlayers, reservedGives } = useBreakStore()
+  const reservedIds = new Set(reservedGives.map((r) => r.givePlayerId))
+  const availableGiveCount = givePlayers.filter((p) => !drawnPlayers.includes(p.name) && !reservedIds.has(p.id)).length
 
   return (
     <nav
@@ -88,9 +90,9 @@ export default function NavBar() {
       </div>
 
       <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
-        <span>
-          <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>{givePlayers.length}</span>{' '}
-          give
+        <span title={`${givePlayers.length} gives configurés, ${drawnPlayers.length} déjà tirés, ${reservedGives.length} réservés`}>
+          <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>{availableGiveCount}</span>{' '}
+          en roue / {givePlayers.length} give
         </span>
         <span>
           <span style={{ color: 'var(--neon-cyan)', fontWeight: 600 }}>{paidSpots.length}</span>{' '}
