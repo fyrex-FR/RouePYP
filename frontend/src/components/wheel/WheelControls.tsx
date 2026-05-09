@@ -65,9 +65,10 @@ export default function WheelControls() {
   // Copié feedback
   const [copied, setCopied] = useState(false)
 
-  // Undo
+  // Undo / safety
   const [undoing, setUndoing] = useState(false)
   const [undoMessage, setUndoMessage] = useState<string | null>(null)
+  const [drawWarning, setDrawWarning] = useState<string | null>(null)
 
   // Stream mode
   const [streamMode, setStreamMode] = useState(false)
@@ -91,9 +92,19 @@ export default function WheelControls() {
   // Prédéfinir le drawCount quand on change de spot
   useEffect(() => {
     if (selectedSpot) {
-      setDrawCount(normalizeDrawCount(selectedSpot.giveCount, maxDraws))
+      queueMicrotask(() => setDrawCount(normalizeDrawCount(selectedSpot.giveCount, maxDraws)))
     }
-  }, [effectiveSelectedSpotId])
+  }, [effectiveSelectedSpotId, selectedSpot, maxDraws])
+
+  useEffect(() => {
+    if (!spinning && !showOverlay) return
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [spinning, showOverlay])
 
   const startSequence = useCallback(() => {
     if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
@@ -106,6 +117,7 @@ export default function WheelControls() {
 
   async function quickDraw() {
     if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
+    setDrawWarning(null)
     const picked = shuffle(availablePlayers).slice(0, effectiveDrawCount)
     const now = new Date().toISOString()
     const results: DrawResult[] = picked.map((p) => ({
@@ -117,7 +129,10 @@ export default function WheelControls() {
     addLiveResults(results.map((r) => ({ ...r, spot: selectedSpot.name })))
     setQuickResults(results)
     setShowQuickRecap(true)
-    await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: results.length, results })
+    const saved = await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: results.length, results })
+    if (!saved && sessionId) {
+      setDrawWarning('⚠️ Tirage gardé en local, mais sauvegarde cloud échouée. Ne recharge pas la page avant d’avoir copié le résultat.')
+    }
     removePaidSpot(selectedSpot.id)
     setSelectedSpotId('')
   }
@@ -162,13 +177,17 @@ export default function WheelControls() {
 
   const handleClose = useCallback(async (results?: DrawResult[]) => {
     const finalResults = results ?? sessionResults
+    setDrawWarning(null)
     setShowOverlay(false)
     setSpinning(false)
     setWinner(null)
     setRemainingSegments([])
     if (selectedSpot && finalResults.length > 0) {
       addLiveResults(finalResults.map((r) => ({ ...r, spot: selectedSpot.name })))
-      await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: finalResults.length, results: finalResults })
+      const saved = await saveDraw({ session_id: sessionId, spot_name: selectedSpot.name, draw_count: finalResults.length, results: finalResults })
+      if (!saved && sessionId) {
+        setDrawWarning('⚠️ Tirage gardé en local, mais sauvegarde cloud échouée. Ne recharge pas la page avant d’avoir copié le résultat.')
+      }
       removePaidSpot(selectedSpot.id)
       setSelectedSpotId('')
     }
@@ -277,6 +296,16 @@ export default function WheelControls() {
       {hasNoPlayers && !hasNoSpots && (
         <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid var(--neon-yellow)', borderRadius: 12, padding: '12px 20px', color: 'var(--neon-yellow)', fontSize: 14 }}>
           ⚠️ Tous les joueurs give ont déjà été tirés.
+        </div>
+      )}
+      {!sessionId && !hasNoSpots && (
+        <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid var(--neon-yellow)', borderRadius: 12, padding: '12px 20px', color: 'var(--neon-yellow)', fontSize: 14, maxWidth: 760, textAlign: 'center' }}>
+          ⚠️ Session non sauvegardée : le navigateur garde l’état en local, mais sauvegarde le break dans Admin avant le live pour pouvoir restaurer depuis l’historique.
+        </div>
+      )}
+      {drawWarning && (
+        <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', borderRadius: 12, padding: '12px 20px', color: '#ef4444', fontSize: 14, maxWidth: 760, textAlign: 'center' }}>
+          {drawWarning}
         </div>
       )}
 

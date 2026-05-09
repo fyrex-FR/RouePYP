@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws, onNext, onClose }: Props) {
+export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws, onNext }: Props) {
   useEffect(() => {
     confetti({
       particleCount: 120,
@@ -34,7 +34,7 @@ export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws,
         justifyContent: 'center',
         zIndex: 200,
       }}
-      onClick={hasMore ? onNext : onClose}
+      onClick={onNext}
     >
       <div
         className="result-card"
@@ -134,7 +134,7 @@ export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws,
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={onNext}
             style={{
               background: 'transparent',
               border: '1px solid var(--border-bright)',
@@ -145,7 +145,7 @@ export default function ResultOverlay({ winner, spotName, drawIndex, totalDraws,
               fontSize: 15,
             }}
           >
-            Fermer
+            Valider et fermer
           </button>
         </div>
       </div>
