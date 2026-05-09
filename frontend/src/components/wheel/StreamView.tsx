@@ -29,7 +29,7 @@ export default function StreamView({
   onSpotChange, onDrawCountChange, onStart, onQuickDraw,
   displayMode, onDisplayModeChange,
 }: Props) {
-  const canAct = !spinning && !!selectedSpot && segments.length > 0
+  const canAct = !spinning && !!selectedSpot && segments.length > 0 && drawCount > 0
   const sortedSpots = [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
 
   return (

@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export async function saveSession(data: {
   break_name: string
   give_players: string[]
-  paid_spots: { name: string; giveCount?: number }[]
+  paid_spots: { name: string; giveCount?: number; reservedGives?: string[] }[]
 }): Promise<Session | null> {
   const { data: session, error } = await supabase
     .from('sessions')
@@ -23,7 +23,7 @@ export async function saveSession(data: {
 export async function updateSession(id: string, data: {
   break_name: string
   give_players: string[]
-  paid_spots: { name: string; giveCount?: number }[]
+  paid_spots: { name: string; giveCount?: number; reservedGives?: string[] }[]
 }): Promise<Session | null> {
   const { data: session, error } = await supabase
     .from('sessions')

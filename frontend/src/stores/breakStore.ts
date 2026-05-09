@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
-import type { AppView, GivePlayer, PaidSpot } from '../types'
+import type { AppView, GivePlayer, PaidSpot, ReservedGive } from '../types'
 
 export interface LiveResult {
   give_player: string
@@ -21,6 +21,11 @@ interface BreakStore {
   setGivePlayers: (players: GivePlayer[]) => void
   addGivePlayer: (name: string) => void
   removeGivePlayer: (id: string) => void
+
+  reservedGives: ReservedGive[]
+  reserveGive: (givePlayerId: string, spotId: string) => void
+  unreserveGive: (id: string) => void
+  setReservedGives: (reservedGives: ReservedGive[]) => void
 
   allPaidSpots: PaidSpot[]
   paidSpots: PaidSpot[]
@@ -61,7 +66,31 @@ export const useBreakStore = create<BreakStore>()(
       addGivePlayer: (name) =>
         set((s) => ({ givePlayers: [...s.givePlayers, { id: nanoid(), name }] })),
       removeGivePlayer: (id) =>
-        set((s) => ({ givePlayers: s.givePlayers.filter((p) => p.id !== id) })),
+        set((s) => ({
+          givePlayers: s.givePlayers.filter((p) => p.id !== id),
+          reservedGives: s.reservedGives.filter((r) => r.givePlayerId !== id),
+        })),
+
+      reservedGives: [],
+      reserveGive: (givePlayerId, spotId) =>
+        set((s) => {
+          const givePlayer = s.givePlayers.find((p) => p.id === givePlayerId)
+          const spot = s.allPaidSpots.find((p) => p.id === spotId) ?? s.paidSpots.find((p) => p.id === spotId)
+          if (!givePlayer || !spot) return s
+          const alreadyReserved = s.reservedGives.some((r) => r.givePlayerId === givePlayerId)
+          if (alreadyReserved) return s
+          const usedBySpot = s.reservedGives.filter((r) => r.spotId === spotId).length
+          if (usedBySpot >= (spot.giveCount ?? 1)) return s
+          return {
+            reservedGives: [
+              ...s.reservedGives,
+              { id: nanoid(), givePlayerId, givePlayerName: givePlayer.name, spotId, spotName: spot.name },
+            ],
+          }
+        }),
+      unreserveGive: (id) =>
+        set((s) => ({ reservedGives: s.reservedGives.filter((r) => r.id !== id) })),
+      setReservedGives: (reservedGives) => set({ reservedGives }),
 
       allPaidSpots: [],
       paidSpots: [],
@@ -115,6 +144,7 @@ export const useBreakStore = create<BreakStore>()(
         set((s) => ({
           drawnPlayers: [],
           liveResults: [],
+          reservedGives: [],
           paidSpots: s.allPaidSpots.length > 0 ? [...s.allPaidSpots] : [...s.paidSpots],
         })),
     }),
@@ -124,6 +154,7 @@ export const useBreakStore = create<BreakStore>()(
         if (state && state.allPaidSpots.length === 0 && state.paidSpots.length > 0) {
           state.allPaidSpots = [...state.paidSpots]
         }
+        if (state && !state.reservedGives) state.reservedGives = []
       },
     }
   )

@@ -4,6 +4,14 @@ export interface PaidSpot {
   giveCount: number
 }
 
+export interface ReservedGive {
+  id: string
+  givePlayerId: string
+  givePlayerName: string
+  spotId: string
+  spotName: string
+}
+
 export interface GivePlayer {
   id: string
   name: string
@@ -29,7 +37,7 @@ export interface Session {
   created_at: string
   break_name: string
   give_players: string[]
-  paid_spots: { name: string; giveCount: number }[]
+  paid_spots: { name: string; giveCount: number; reservedGives?: string[] }[]
 }
 
 export type AppView = 'wheel' | 'admin' | 'history'

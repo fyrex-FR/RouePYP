@@ -3,9 +3,20 @@ import { nanoid } from 'nanoid'
 import { useBreakStore } from '../../stores/breakStore'
 
 export default function GivePlayersInput() {
-  const { givePlayers, setGivePlayers, addGivePlayer, removeGivePlayer } = useBreakStore()
+  const { givePlayers, setGivePlayers, addGivePlayer, removeGivePlayer, paidSpots, reservedGives, reserveGive, unreserveGive } = useBreakStore()
   const [bulk, setBulk] = useState('')
   const [singleName, setSingleName] = useState('')
+  const spots = paidSpots
+
+  function reservedFor(playerId: string) {
+    return reservedGives.find((r) => r.givePlayerId === playerId)
+  }
+
+  function remainingRights(spotId: string) {
+    const spot = spots.find((s) => s.id === spotId)
+    if (!spot) return 0
+    return Math.max(0, (spot.giveCount ?? 1) - reservedGives.filter((r) => r.spotId === spotId).length)
+  }
 
   function handleBulkImport() {
     const names = bulk
@@ -152,7 +163,9 @@ export default function GivePlayersInput() {
             overflowY: 'auto',
           }}
         >
-          {givePlayers.map((p) => (
+          {givePlayers.map((p) => {
+            const reservation = reservedFor(p.id)
+            return (
             <div
               key={p.id}
               style={{
@@ -165,23 +178,56 @@ export default function GivePlayersInput() {
                 padding: '8px 12px',
               }}
             >
-              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>🎁 {p.name}</span>
-              <button
-                onClick={() => removeGivePlayer(p.id)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  padding: '0 4px',
-                  lineHeight: 1,
-                }}
-              >
-                ×
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>🎁 {p.name}</span>
+                {reservation && (
+                  <span style={{ fontSize: 11, color: 'var(--neon-cyan)' }}>
+                    🔒 Réservé à {reservation.spotName} — exclu de la roue
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {reservation ? (
+                  <button
+                    onClick={() => unreserveGive(reservation.id)}
+                    style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', borderRadius: 7, color: '#ef4444', padding: '5px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                  >
+                    Annuler
+                  </button>
+                ) : spots.length > 0 ? (
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) reserveGive(p.id, e.target.value)
+                      e.currentTarget.value = ''
+                    }}
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 7, color: 'var(--text-primary)', padding: '5px 7px', fontSize: 11, cursor: 'pointer', maxWidth: 150 }}
+                  >
+                    <option value="">Réserver…</option>
+                    {spots.map((s) => (
+                      <option key={s.id} value={s.id} disabled={remainingRights(s.id) <= 0}>
+                        {s.name} ({remainingRights(s.id)} dispo)
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                <button
+                  onClick={() => removeGivePlayer(p.id)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: 16,
+                    padding: '0 4px',
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </button>
+              </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 

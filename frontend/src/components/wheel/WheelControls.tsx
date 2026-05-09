@@ -8,10 +8,10 @@ import StreamView from './StreamView'
 import type { DrawResult } from '../../types'
 
 function normalizeDrawCount(value: number | null | undefined, maxDraws: number) {
+  if (maxDraws < 1) return 0
   const parsed = Number(value)
-  const safeMax = Math.max(maxDraws, 1)
   if (!Number.isFinite(parsed) || parsed < 1) return 1
-  return Math.min(Math.floor(parsed), safeMax)
+  return Math.min(Math.floor(parsed), maxDraws)
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -34,14 +34,18 @@ function copyToClipboard(results: DrawResult[], spotName?: string) {
 export default function WheelControls() {
   const {
     givePlayers, paidSpots, drawnPlayers,
+    reservedGives,
     markDrawn, unmarkDrawn,
     sessionId, removePaidSpot, restorePaidSpot,
     addLiveResults, removeLiveResultsForSpot,
   } = useBreakStore()
 
   const availablePlayers = useMemo(
-    () => givePlayers.filter((p) => !drawnPlayers.includes(p.name)),
-    [givePlayers, drawnPlayers]
+    () => {
+      const reservedIds = new Set(reservedGives.map((r) => r.givePlayerId))
+      return givePlayers.filter((p) => !drawnPlayers.includes(p.name) && !reservedIds.has(p.id))
+    },
+    [givePlayers, drawnPlayers, reservedGives]
   )
 
   const [selectedSpotId, setSelectedSpotId] = useState<string>('')
@@ -75,7 +79,13 @@ export default function WheelControls() {
   )
   const effectiveSelectedSpotId = selectedSpotId || sortedSpots[0]?.id || ''
   const selectedSpot = paidSpots.find((s) => s.id === effectiveSelectedSpotId)
-  const maxDraws = Math.min(availablePlayers.length, 20)
+  const selectedSpotReservedCount = selectedSpot
+    ? reservedGives.filter((r) => r.spotId === selectedSpot.id || r.spotName === selectedSpot.name).length
+    : 0
+  const selectedSpotRemainingGiveCount = selectedSpot
+    ? Math.max(0, (selectedSpot.giveCount ?? 1) - selectedSpotReservedCount)
+    : 0
+  const maxDraws = Math.min(availablePlayers.length, selectedSpotRemainingGiveCount, 20)
   const effectiveDrawCount = normalizeDrawCount(drawCount, maxDraws)
 
   // Prédéfinir le drawCount quand on change de spot
@@ -86,16 +96,16 @@ export default function WheelControls() {
   }, [effectiveSelectedSpotId])
 
   const startSequence = useCallback(() => {
-    if (!selectedSpot || availablePlayers.length === 0 || spinning) return
+    if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
     setCurrentDrawIndex(0)
     setSessionResults([])
     setRemainingSegments(availablePlayers.map((p) => p.name))
     setTriggerSpin(true)
     setSpinning(true)
-  }, [selectedSpot, availablePlayers, spinning])
+  }, [selectedSpot, availablePlayers, selectedSpotRemainingGiveCount, spinning])
 
   async function quickDraw() {
-    if (!selectedSpot || availablePlayers.length === 0 || spinning) return
+    if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
     const picked = shuffle(availablePlayers).slice(0, effectiveDrawCount)
     const now = new Date().toISOString()
     const results: DrawResult[] = picked.map((p) => ({
@@ -213,7 +223,7 @@ export default function WheelControls() {
 
   const hasNoPlayers = availablePlayers.length === 0
   const hasNoSpots = paidSpots.length === 0
-  const canAct = !spinning && !!selectedSpot && !hasNoPlayers
+  const canAct = !spinning && !!selectedSpot && !hasNoPlayers && selectedSpotRemainingGiveCount > 0
 
   if (streamMode) {
     return (
@@ -306,8 +316,13 @@ export default function WheelControls() {
               <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                 <span>Gives restants</span>
                 <span style={{ color: availablePlayers.length === 0 ? '#ef4444' : 'var(--neon-green)', fontWeight: 700 }}>
-                  {availablePlayers.length} / {givePlayers.length}
+                  {selectedSpotRemainingGiveCount} pour ce spot · {availablePlayers.length} en roue
                 </span>
+              </div>
+            )}
+            {selectedSpot && selectedSpotReservedCount > 0 && (
+              <div style={{ marginTop: 6, fontSize: 12, color: 'var(--neon-cyan)' }}>
+                🔒 {selectedSpotReservedCount} give réservé{selectedSpotReservedCount > 1 ? 's' : ''} consomme{selectedSpotReservedCount > 1 ? 'nt' : ''} déjà {selectedSpotReservedCount} droit{selectedSpotReservedCount > 1 ? 's' : ''}.
               </div>
             )}
           </div>

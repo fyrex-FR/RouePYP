@@ -10,6 +10,7 @@ export default function AdminPanel() {
   const {
     breakName, setBreakName,
     givePlayers, paidSpots, allPaidSpots,
+    reservedGives, setReservedGives,
     setSessionId, sessionId,
     resetDrawn, resetTirage, setGivePlayers, setPaidSpots, loadSessionSpots, setDrawnPlayers,
   } = useBreakStore()
@@ -31,6 +32,7 @@ export default function AdminPanel() {
       setBreakName('')
       setGivePlayers([])
       setPaidSpots([])
+      setReservedGives([])
       setSessionId(null)
       resetDrawn()
       setSessions((prev) => prev.filter((s) => s.id !== sessionId))
@@ -43,6 +45,7 @@ export default function AdminPanel() {
     setBreakName('')
     setGivePlayers([])
     setPaidSpots([])
+    setReservedGives([])
     setSessionId(null)
     resetDrawn()
     setConfirmReset(false)
@@ -53,6 +56,7 @@ export default function AdminPanel() {
       setBreakName('')
       setGivePlayers([])
       setPaidSpots([])
+      setReservedGives([])
       setSessionId(null)
       resetDrawn()
       return
@@ -69,10 +73,20 @@ export default function AdminPanel() {
 
     const allSessionSpots = session.paid_spots.map((s) => ({ id: nanoid(), name: s.name, giveCount: s.giveCount ?? 1 }))
     const remainingSessionSpots = allSessionSpots.filter((s) => !drawnSpotNames.has(s.name))
+    const loadedGivePlayers = session.give_players.map((name) => ({ id: nanoid(), name }))
+    const loadedReservedGives = session.paid_spots.flatMap((spot) => {
+      const loadedSpot = allSessionSpots.find((s) => s.name === spot.name)
+      return (spot.reservedGives ?? []).map((giveName) => {
+        const givePlayer = loadedGivePlayers.find((p) => p.name === giveName)
+        if (!loadedSpot || !givePlayer) return null
+        return { id: nanoid(), givePlayerId: givePlayer.id, givePlayerName: givePlayer.name, spotId: loadedSpot.id, spotName: loadedSpot.name }
+      }).filter(Boolean)
+    })
 
     setBreakName(session.break_name)
-    setGivePlayers(session.give_players.map((name) => ({ id: nanoid(), name })))
+    setGivePlayers(loadedGivePlayers)
     loadSessionSpots(allSessionSpots, remainingSessionSpots)
+    setReservedGives(loadedReservedGives as NonNullable<(typeof loadedReservedGives)[number]>[])
     setSessionId(session.id)
     setDrawnPlayers(drawnNames)
   }
@@ -86,7 +100,13 @@ export default function AdminPanel() {
       give_players: givePlayers.map((p) => p.name),
       // Persist all known spots, not only remaining ones, so a live edit does not
       // erase already-drawn spots from the saved session definition.
-      paid_spots: (allPaidSpots.length ? allPaidSpots : paidSpots).map((s) => ({ name: s.name, giveCount: s.giveCount })),
+      paid_spots: (allPaidSpots.length ? allPaidSpots : paidSpots).map((s) => ({
+        name: s.name,
+        giveCount: s.giveCount,
+        reservedGives: reservedGives
+          .filter((r) => r.spotId === s.id || r.spotName === s.name)
+          .map((r) => r.givePlayerName),
+      })),
     }
 
     const session = sessionId
