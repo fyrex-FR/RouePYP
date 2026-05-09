@@ -50,6 +50,20 @@ export async function saveDraw(data: {
   return draw
 }
 
+export async function updateDraw(id: string, data: {
+  draw_count: number
+  results: { give_player: string; paid_player: string; buyer_name?: string; drawn_at: string }[]
+}): Promise<Draw | null> {
+  const { data: draw, error } = await supabase
+    .from('draws')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) { console.error('updateDraw:', error); return null }
+  return draw
+}
+
 export async function deleteSession(id: string): Promise<boolean> {
   await supabase.from('draws').delete().eq('session_id', id)
   const { error } = await supabase.from('sessions').delete().eq('id', id)
