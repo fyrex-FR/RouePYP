@@ -24,7 +24,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function copyToClipboard(results: DrawResult[], spotName?: string) {
-  const lines = results.map((r) => `🎁 ${r.give_player} → 💰 ${r.paid_player}`)
+  const lines = results.map((r) => `🎁 ${r.give_player} → 💰 ${r.paid_player}${r.buyer_name ? ` (${r.buyer_name})` : ''}`)
   const text = spotName
     ? `Résultats — ${spotName}\n${lines.join('\n')}`
     : lines.join('\n')
@@ -74,6 +74,7 @@ export default function WheelControls() {
   // Stream mode
   const [streamMode, setStreamMode] = useState(false)
   const [displayMode, setDisplayMode] = useState<GiveawayDisplayMode>('auto')
+  const [buyerNameBySpot, setBuyerNameBySpot] = useState<Record<string, string>>({})
 
   const sortedSpots = useMemo(
     () => [...paidSpots].sort((a, b) => a.name.localeCompare(b.name, 'fr')),
@@ -89,6 +90,11 @@ export default function WheelControls() {
     : 0
   const maxDraws = Math.min(availablePlayers.length, selectedSpotRemainingGiveCount, 20)
   const effectiveDrawCount = normalizeDrawCount(drawCount, maxDraws)
+  const currentBuyerName = selectedSpot ? buyerNameBySpot[selectedSpot.id]?.trim() || '' : ''
+
+  function askBuyerName(spotName: string, previous = '') {
+    return window.prompt(`Qui a pris/rentré le spot ${spotName} ?`, previous)?.trim() ?? ''
+  }
 
   // Prédéfinir le drawCount quand on change de spot
   useEffect(() => {
@@ -109,22 +115,29 @@ export default function WheelControls() {
 
   const startSequence = useCallback(() => {
     if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
+    const buyerName = currentBuyerName || askBuyerName(selectedSpot.name)
+    if (!buyerName) return
+    setBuyerNameBySpot((prev) => ({ ...prev, [selectedSpot.id]: buyerName }))
     setCurrentDrawIndex(0)
     setSessionResults([])
     setSavedPartialResults([])
     setRemainingSegments(availablePlayers.map((p) => p.name))
     setTriggerSpin(true)
     setSpinning(true)
-  }, [selectedSpot, availablePlayers, selectedSpotRemainingGiveCount, spinning])
+  }, [selectedSpot, availablePlayers, selectedSpotRemainingGiveCount, spinning, currentBuyerName])
 
   async function quickDraw() {
     if (!selectedSpot || availablePlayers.length === 0 || selectedSpotRemainingGiveCount <= 0 || spinning) return
+    const buyerName = currentBuyerName || askBuyerName(selectedSpot.name)
+    if (!buyerName) return
+    setBuyerNameBySpot((prev) => ({ ...prev, [selectedSpot.id]: buyerName }))
     setDrawWarning(null)
     const picked = shuffle(availablePlayers).slice(0, effectiveDrawCount)
     const now = new Date().toISOString()
     const results: DrawResult[] = picked.map((p) => ({
       give_player: p.name,
       paid_player: selectedSpot.name,
+      buyer_name: buyerName,
       drawn_at: now,
     }))
     picked.forEach((p) => markDrawn(p.name))
@@ -203,6 +216,7 @@ export default function WheelControls() {
     const result: DrawResult = {
       give_player: winner,
       paid_player: selectedSpot.name,
+      buyer_name: currentBuyerName || buyerNameBySpot[selectedSpot.id] || '',
       drawn_at: new Date().toISOString(),
     }
     const updatedResults = [...sessionResults, result]
@@ -225,7 +239,7 @@ export default function WheelControls() {
     } else {
       handleClose(updatedResults)
     }
-  }, [winner, selectedSpot, sessionResults, markDrawn, sessionId, currentDrawIndex, effectiveDrawCount, remainingSegments, handleClose])
+  }, [winner, selectedSpot, sessionResults, markDrawn, sessionId, currentDrawIndex, effectiveDrawCount, remainingSegments, handleClose, currentBuyerName, buyerNameBySpot])
 
   // Raccourcis clavier
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -347,7 +361,7 @@ export default function WheelControls() {
                 style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-bright)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
               >
                 {sortedSpots.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>{s.name}{buyerNameBySpot[s.id] ? ` — ${buyerNameBySpot[s.id]}` : ''}</option>
                 ))}
               </select>
             )}
@@ -358,6 +372,20 @@ export default function WheelControls() {
                 <span style={{ color: availablePlayers.length === 0 ? '#ef4444' : 'var(--neon-green)', fontWeight: 700 }}>
                   {selectedSpotRemainingGiveCount} pour ce spot · {availablePlayers.length} en roue
                 </span>
+              </div>
+            )}
+            {selectedSpot && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => {
+                    const buyerName = askBuyerName(selectedSpot.name, currentBuyerName)
+                    if (buyerName) setBuyerNameBySpot((prev) => ({ ...prev, [selectedSpot.id]: buyerName }))
+                  }}
+                  disabled={spinning}
+                  style={{ flex: 1, background: currentBuyerName ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)', border: `1px solid ${currentBuyerName ? 'var(--neon-green)' : 'var(--neon-yellow)'}`, borderRadius: 8, color: currentBuyerName ? 'var(--neon-green)' : 'var(--neon-yellow)', padding: '7px 9px', cursor: spinning ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 700 }}
+                >
+                  {currentBuyerName ? `👤 ${currentBuyerName}` : '👤 Renseigner acheteur'}
+                </button>
               </div>
             )}
             {selectedSpot && selectedSpotReservedCount > 0 && (
@@ -471,7 +499,7 @@ export default function WheelControls() {
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 20 }}>#{i + 1}</span>
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--neon-green)' }}>🎁 {r.give_player}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>→</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--neon-cyan)' }}>💰 {r.paid_player}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--neon-cyan)' }}>💰 {r.paid_player}{r.buyer_name ? ` · 👤 ${r.buyer_name}` : ''}</span>
                 </div>
               ))}
             </div>

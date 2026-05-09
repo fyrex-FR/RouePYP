@@ -20,6 +20,7 @@ export interface GivePlayer {
 export interface DrawResult {
   give_player: string
   paid_player: string
+  buyer_name?: string
   drawn_at: string
 }
 

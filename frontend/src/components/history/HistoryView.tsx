@@ -13,11 +13,12 @@ function formatDate(iso: string) {
 }
 
 function exportCSV(draws: Draw[]) {
-  const rows: string[][] = [['Spot payant', 'Joueur give', 'Heure']]
+  const rows: string[][] = [['Spot payant', 'Acheteur', 'Joueur give', 'Heure']]
   for (const draw of draws) {
     for (const r of draw.results) {
       rows.push([
         draw.spot_name,
+        r.buyer_name ?? '',
         r.give_player,
         new Date(r.drawn_at).toLocaleString('fr-FR'),
       ])
@@ -241,7 +242,7 @@ export default function HistoryView() {
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>→</span>
                       <span style={{ flex: 1, fontSize: 14, color: 'var(--neon-cyan)', fontWeight: 600 }}>
-                        💰 {r.paid_player}
+                        💰 {r.paid_player}{r.buyer_name ? ` · 👤 ${r.buyer_name}` : ''}
                       </span>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {new Date(r.drawn_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}

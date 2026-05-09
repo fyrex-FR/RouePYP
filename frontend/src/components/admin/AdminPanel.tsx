@@ -123,6 +123,30 @@ export default function AdminPanel() {
     setSaving(false)
   }
 
+  async function handleDuplicateSession() {
+    if (!sessionId || !breakName.trim() || !givePlayers.length || !(allPaidSpots.length || paidSpots.length)) return
+    setSaving(true)
+    const baseSpots = allPaidSpots.length ? allPaidSpots : paidSpots
+    const payload = {
+      break_name: `${breakName.trim()} — copie backup`,
+      give_players: givePlayers.map((p) => p.name),
+      paid_spots: baseSpots.map((s) => ({
+        name: s.name,
+        giveCount: s.giveCount,
+        reservedGives: reservedGives
+          .filter((r) => r.spotId === s.id || r.spotName === s.name)
+          .map((r) => r.givePlayerName),
+      })),
+    }
+    const duplicate = await saveSession(payload)
+    if (duplicate) {
+      setSessions((prev) => [duplicate, ...prev])
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    }
+    setSaving(false)
+  }
+
   const canSave = breakName.trim() && givePlayers.length > 0 && paidSpots.length > 0
 
   return (
@@ -290,6 +314,26 @@ export default function AdminPanel() {
           <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
             Session active : <code style={{ color: 'var(--accent-bright)' }}>{sessionId.slice(0, 8)}…</code>
           </span>
+        )}
+
+        {sessionId && (
+          <button
+            onClick={handleDuplicateSession}
+            disabled={saving}
+            title="Créer une copie backup de ce break sans les tirages"
+            style={{
+              background: 'rgba(16,185,129,0.12)',
+              border: '1px solid var(--neon-green)',
+              borderRadius: 12,
+              color: 'var(--neon-green)',
+              padding: '14px 20px',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            📑 Copier le break
+          </button>
         )}
 
         <button

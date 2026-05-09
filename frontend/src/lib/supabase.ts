@@ -39,7 +39,7 @@ export async function saveDraw(data: {
   session_id: string | null
   spot_name: string
   draw_count: number
-  results: { give_player: string; paid_player: string; drawn_at: string }[]
+  results: { give_player: string; paid_player: string; buyer_name?: string; drawn_at: string }[]
 }): Promise<Draw | null> {
   const { data: draw, error } = await supabase
     .from('draws')
