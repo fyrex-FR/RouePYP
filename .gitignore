@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# Results viewer
+results-viewer/node_modules/
+results-viewer/dist/
+results-viewer/.env
+results-viewer/.env.local
+results-viewer/.env.*.local
